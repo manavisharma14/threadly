@@ -31,6 +31,7 @@ model User {
 
   // 👇 back-relation: which posts this user has liked
   likes         Like[]
+  comments  Comment[]
 }
 
 model Account {
@@ -60,11 +61,10 @@ model Post {
   content   String
   createdAt DateTime @default(now())
 
-  // 👇 back-relation: which users liked this post
   likes     Like[]
+  comments  Comment[]
 
-  // 👇 optional counter cache for fast counts (keep in sync in your API)
-  // likesCount Int    @default(0)
+
 }
 
 model Session {
@@ -99,4 +99,19 @@ model Like {
   // Helpful for queries
   @@index([postId])
   @@index([userId])
+}
+
+model Comment {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @db.ObjectId
+  postId      String      @db.ObjectId
+  content     String      
+  createdAt   DateTime    @default(now())       
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+
 }
