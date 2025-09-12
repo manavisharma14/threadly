@@ -15,10 +15,11 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
-			smoky: "#11120D",
-			olive: "#565449",
-			bone: "#D8CFBC",
-			floral: "#FFFBF4",
+			// smoky: "#11120D",
+			smoky: "#071018",
+			olive: "#1C2B38",
+			bone: "#454641",
+			floral: "white",
   	}
 }
   },

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "./ui/button";
+import { Heart } from "lucide-react";
 
 type LikeButtonProps = {
     postId: string;
@@ -71,12 +72,14 @@ export default function LikeButton({ postId }: LikeButtonProps) {
     
     return (
         <button
-      onClick={handleLike}
-      className={`flex items-center gap-1 px-2 py-1 rounded-md ${
-        liked ? "bg-red-500 text-white" : "bg-gray-200 text-gray-700"
-      }`}
-    >
-      {liked ? "❤️" : "🤍"} {count}
-    </button>
-    )
-}
+          onClick={handleLike}
+          className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-500 transition"
+        >
+          <Heart
+            size={18}
+            className={liked ? "fill-red-500 text-red-500" : "text-gray-500"}
+          />
+          {count}
+        </button>
+      );
+    }

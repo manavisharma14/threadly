@@ -15,8 +15,7 @@ model User {
   image         String?
 
   // Profile
-  username      String?
-  @@index([username])         // index for quick lookups (not unique yet)
+  username      String?    @unique
   bio           String?
   linkedIn      String?
   website       String?
