@@ -10,7 +10,7 @@ import CommentList from "@/components/CommentList";
 import CommentForm from "@/components/CommentForm";
 import { Trash2 } from "lucide-react";
 import CommentButton from "@/components/CommentButton";
-import { User, Post } from "@prisma/client"; 
+import { Post } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -21,21 +21,21 @@ import {
 } from "@/components/ui/dialog";
 
 type ProfileClientProps = {
-    session: Session;
-    user: {
-      name: string | null;
-      email: string | null;
-      image: string | null;
-      username: string | null;
-      bio: string | null;
-      linkedIn: string | null;
-      website: string | null;
-      building: string | null;
-    } | null;
-    posts: (Post & { author: { name: string | null; image: string | null } })[];
-  };
+  session: Session;
+  user: {
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    username: string | null;
+    bio: string | null;
+    linkedIn: string | null;
+    website: string | null;
+    building: string | null;
+  } | null;
+  posts: (Post & { author: { name: string | null; image: string | null } })[];
+};
 
-export default function ProfileClient({ session, user, posts } : ProfileClientProps) {
+export default function ProfileClient({ session, user, posts }: ProfileClientProps) {
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -44,7 +44,13 @@ export default function ProfileClient({ session, user, posts } : ProfileClientPr
   const [linkedin, setLinkedin] = useState(user?.linkedIn ?? "");
   const [website, setWebsite] = useState(user?.website ?? "");
   const [building, setBuilding] = useState(user?.building ?? "");
-  const [allPosts, setAllPosts] = useState(posts);
+  const [allPosts, setAllPosts] = useState<
+    (Post & { author: { name: string | null; image: string | null } })[]
+  >(posts);
+
+  
+
+  
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +76,7 @@ export default function ProfileClient({ session, user, posts } : ProfileClientPr
 
     const res = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
     if (res.ok) {
-      setAllPosts(allPosts.filter((p) => p.id !== postId));
+      setAllPosts((prev) => prev.filter((p) => p.id !== postId));
     } else {
       const err = await res.json().catch(() => ({}));
       alert(err.message || "Failed to delete post");
@@ -100,7 +106,7 @@ export default function ProfileClient({ session, user, posts } : ProfileClientPr
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger className="ml-auto bg-olive text-bone px-4 py-2 rounded-md">
+          <DialogTrigger className="ml-auto bg-olive text-white  px-4 py-2 rounded-xl hover:bg-olive/60">
             Edit Profile
           </DialogTrigger>
           <DialogContent className="bg-smoky text-floral border border-olive/40">
@@ -175,19 +181,26 @@ export default function ProfileClient({ session, user, posts } : ProfileClientPr
 
       {/* Posts */}
       <div>
-        <h2 className="text-lg font-semibold mb-4 text-bone">Your Posts</h2>
+        <h2 className="text-lg font-semibold mb-4 text-white">Your Posts</h2>
         {allPosts.length === 0 ? (
           <p className="text-gray-400">No posts yet. Write your first post!</p>
         ) : (
           <ul className="space-y-4">
             {allPosts.map((post) => (
-              <li key={post.id} className="p-4 rounded-lg bg-smoky border-b border-olive/40">
+              <li
+                key={post.id}
+                className="p-4 rounded-lg bg-smoky border-b border-olive/40"
+              >
                 <div className="flex items-center gap-3">
-                  <img src={post.author?.image || ""} alt="" className="w-8 h-8 rounded-full" />
+                  <img
+                    src={post.author?.image || ""}
+                    alt=""
+                    className="w-8 h-8 rounded-full"
+                  />
                   <div className="flex-1 flex justify-between items-start">
                     <div>
-                      <span className="text-sm text-bone">{post.author?.name}</span>
-                      <p className="text-floral">{post.content}</p>
+                      <span className="text-sm text-gray-500">{post.author?.name}</span>
+                      <p className="text-gray-400">{post.content}</p>
                       <p className="text-xs text-gray-500 mt-1">
                         {new Date(post.createdAt).toLocaleString()}
                       </p>
@@ -199,12 +212,27 @@ export default function ProfileClient({ session, user, posts } : ProfileClientPr
                 </div>
 
                 <div className="flex gap-5 mb-5 mt-2 justify-end">
-                  <LikeButton postId={post.id} />
-                  <CommentButton postId={post.id} />
-                </div>
+                  <LikeButton
+                    postId={post.id}
+                    initialCount={post.likesCount}
+                    initialLiked={post.likedByMe}
+                  />
+<CommentButton postId={post.id} count={post.commentsCount} />                
+</div>
 
-                <CommentList postId={post.id} />
-                <CommentForm postId={post.id} />
+<CommentList postId={post.id} initialComments={post.comments || []} />
+<CommentForm
+                  postId={post.id}
+                  onSuccess={() => {
+                    setAllPosts((prev) =>
+                      prev.map((p) =>
+                        p.id === post.id
+                          ? { ...p, commentsCount: (p.commentsCount ?? 0) + 1 }
+                          : p
+                      )
+                    );
+                  }}
+                />
               </li>
             ))}
           </ul>

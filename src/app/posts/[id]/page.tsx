@@ -53,7 +53,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
                         <CommentButton postId={post.id} />
                         </div>
       
-                        <CommentList postId={post.id} />
+                        <CommentList postId={post.id} initialComments={post.comments || []} />
                         <CommentForm postId={post.id} />
                       </div>
 

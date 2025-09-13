@@ -1,27 +1,36 @@
-"use client"
-import { useSession } from "next-auth/react";
+"use client";
+import { User } from "@/types";
 
-export default function Profile() {
-    const { data: session } = useSession();
+interface ProfileProps {
+  user: User | null;
+}
 
+export default function Profile({ user }: ProfileProps) {
+  if (!user) {
     return (
-        <div className="border p-4 rounded-xl shadow-md bg-olive/20">
-            <h1 className="text-center">your user profie</h1>
+      <div className="border p-4 rounded-xl shadow-md bg-olive/20">
+        <h1 className="text-center">Your user profile</h1>
+        <p className="text-center text-gray-400 mt-2">Not signed in</p>
+      </div>
+    );
+  }
 
-            {session && (
-                <div>
-                    <div className="flex items-center space-x-4 mb-4 justify-center">
-                        <img src={session.user?.image || ""} alt="Profile Image" className="w-16 h-16 rounded-full" />
+  return (
+    <div className="border p-4 rounded-xl shadow-md bg-olive/20">
+      <h1 className="text-center">Your user profile</h1>
 
-                    </div>
-                    <div className="text-center">
-                        <p>{session.user?.name}</p>
-                        <p> {session.user?.email}</p>
-                    </div>
-                </div>
-            )}
+      <div className="flex items-center space-x-4 mb-4 justify-center">
+        <img
+          src={user.image || ""}
+          alt="Profile Image"
+          className="w-16 h-16 rounded-full"
+        />
+      </div>
 
-        </div>
-    )
-
+      <div className="text-center">
+        <p className="font-semibold">{user.name}</p>
+        <p className="text-sm text-gray-500">{user.email}</p>
+      </div>
+    </div>
+  );
 }

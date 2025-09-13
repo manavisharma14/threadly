@@ -10,6 +10,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
 
+
     if (!session?.user?.email) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -52,7 +53,9 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
     const { id } = await context.params;
+
     if (!id) {
       return NextResponse.json({ message: "Post ID is required" }, { status: 400 });
     }
@@ -61,15 +64,22 @@ export async function GET(
       where: { id },
       include: {
         author: {
-          select: { id: true, name: true, image: true },
+          select: { id: true, name: true, image: true, username: true },
         },
         comments: {
           include: {
-            user: {
-              select: { id: true, name: true, image: true },
-            },
+            user: { select: { id: true, name: true, image: true } },
           },
         },
+        _count: {
+          select: { comments: true, likes: true },
+        },
+        likes: session?.user?.email
+          ? {
+              where: { user: { email: session.user.email } },
+              select: { id: true },
+            }
+          : false,
       },
     });
 
@@ -77,9 +87,21 @@ export async function GET(
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    return NextResponse.json(post, { status: 200 });
+    // Transform into safe shape for frontend
+    const safePost = {
+      ...post,
+      createdAt: post.createdAt.toISOString(),
+      commentsCount: post._count.comments,
+      likesCount: post._count.likes,
+      likedByMe: post.likes ? post.likes.length > 0 : false,
+    };
+
+    return NextResponse.json(safePost, { status: 200 });
   } catch (error) {
     console.error("GET /api/posts/[id] error", error);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
