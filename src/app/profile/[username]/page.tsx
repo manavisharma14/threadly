@@ -36,7 +36,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           following: true,
           likes: true,
           posts: true,
-          comments: true,
+
         },
       },
       followers: {
@@ -57,13 +57,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     orderBy: { createdAt: "desc" },
     include: {
       author: true,
-      _count: { select: { likes: true, comments: true } },
+      _count: { select: { likes: true, replies: true } }, 
       likes: currentUser
         ? { where: { userId: currentUser.id }, select: { id: true } }
         : false,
-      comments: {
+      replies: {
         orderBy: { createdAt: "desc" },
-        include: { user: true },
+        include: { author: true }, 
       },
     },
   });
@@ -71,8 +71,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const posts = postsRaw.map((post) => ({
     ...post,
     likesCount: post._count.likes,
-    commentsCount: post._count.comments,
+    repliesCount: post._count.replies, 
     likedByMe: currentUser ? post.likes.length > 0 : false,
+    replies: post.replies.map((r) => ({
+      ...r,
+      createdAt: r.createdAt.toISOString(),
+    })),
   }));
 
   return (
@@ -80,7 +84,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       user={user}
       currentUserId={currentUser?.id || ""}
       isFollowing={isFollowing}
-      posts={posts} // 👈 comments are included here
+      posts={posts} // 👈 now includes replies + repliesCount
     />
   );
 }

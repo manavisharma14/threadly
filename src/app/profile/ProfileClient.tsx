@@ -3,13 +3,11 @@ import { useState } from "react";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import LikeButton from "@/components/LikeButton";
-import CommentList from "@/components/CommentList";
-import CommentForm from "@/components/CommentForm";
+import ReplyList from "@/components/ReplyList";
+import ReplyForm from "@/components/ReplyForm";
 import { Trash2 } from "lucide-react";
-import CommentButton from "@/components/CommentButton";
+import ReplyButton from "@/components/ReplyButton";
 import { Post } from "@/types";
 import {
   Dialog,
@@ -37,21 +35,19 @@ type ProfileClientProps = {
 
 export default function ProfileClient({ session, user, posts }: ProfileClientProps) {
   const router = useRouter();
-
   const [open, setOpen] = useState(false);
+
   const [username, setUsername] = useState(user?.username ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
   const [linkedin, setLinkedin] = useState(user?.linkedIn ?? "");
   const [website, setWebsite] = useState(user?.website ?? "");
   const [building, setBuilding] = useState(user?.building ?? "");
+
   const [allPosts, setAllPosts] = useState<
     (Post & { author: { name: string | null; image: string | null } })[]
   >(posts);
 
-  
-
-  
-
+  // Save profile
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { username, bio, linkedIn: linkedin, website, building };
@@ -71,6 +67,7 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
     }
   };
 
+  // Delete post
   const handleDeletePost = async (postId: string) => {
     if (!confirm("Are you sure you want to delete this post?")) return;
 
@@ -105,75 +102,21 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
           </div>
         </div>
 
+        {/* Edit profile dialog */}
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger className="ml-auto bg-olive text-white  px-4 py-2 rounded-xl hover:bg-olive/60">
+          <DialogTrigger className="ml-auto bg-olive text-white px-4 py-2 rounded-xl hover:bg-olive/60">
             Edit Profile
           </DialogTrigger>
           <DialogContent className="bg-smoky text-floral border border-olive/40">
             <DialogHeader>
               <DialogTitle>Edit profile</DialogTitle>
-              <DialogDescription>Update what others see on your profile.</DialogDescription>
+              <DialogDescription>
+                Update what others see on your profile.
+              </DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSave} className="space-y-4">
-              <div className="grid gap-2 ">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  placeholder="@yourhandle"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Input
-                  id="bio"
-                  placeholder="Founder at…"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="linkedin">LinkedIn URL</Label>
-                <Input
-                  id="linkedin"
-                  placeholder="https://linkedin.com/in/you"
-                  value={linkedin}
-                  onChange={(e) => setLinkedin(e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="website">Website</Label>
-                <Input
-                  id="website"
-                  placeholder="https://yourdomain.xyz"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="building">What are you building?</Label>
-                <Input
-                  id="building"
-                  placeholder="One-liner about your product"
-                  value={building}
-                  onChange={(e) => setBuilding(e.target.value)}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-olive text-bone hover:bg-olive/80">
-                  Save
-                </Button>
-              </div>
+              {/* inputs go here */}
             </form>
           </DialogContent>
         </Dialog>
@@ -182,59 +125,70 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
       {/* Posts */}
       <div>
         <h2 className="text-lg font-semibold mb-4 text-white">Your Posts</h2>
-        {allPosts.length === 0 ? (
+        {allPosts.filter((p) => !p.parentId).length === 0 ? (
           <p className="text-gray-400">No posts yet. Write your first post!</p>
         ) : (
           <ul className="space-y-4">
-            {allPosts.map((post) => (
-              <li
-                key={post.id}
-                className="p-4 rounded-lg bg-smoky border-b border-olive/40"
-              >
-                <div className="flex items-center gap-3">
-                  <img
-                    src={post.author?.image || ""}
-                    alt=""
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <div className="flex-1 flex justify-between items-start">
-                    <div>
-                      <span className="text-sm text-gray-500">{post.author?.name}</span>
-                      <p className="text-gray-400">{post.content}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(post.createdAt).toLocaleString()}
-                      </p>
+            {allPosts
+              .filter((post) => !post.parentId) // ✅ hide replies
+              .map((post) => (
+                <li
+                  key={post.id}
+                  className="p-4 rounded-lg bg-smoky border-b border-olive/40"
+                >
+                  {/* Post header */}
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={post.author?.image || ""}
+                      alt=""
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <div className="flex-1 flex justify-between items-start">
+                      <div>
+                        <span className="text-sm text-gray-500">
+                          {post.author?.name}
+                        </span>
+                        <p className="text-gray-400">{post.content}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(post.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <Button onClick={() => handleDeletePost(post.id)}>
+                        <Trash2 />
+                      </Button>
                     </div>
-                    <Button onClick={() => handleDeletePost(post.id)}>
-                      <Trash2 />
-                    </Button>
                   </div>
-                </div>
 
-                <div className="flex gap-5 mb-5 mt-2 justify-end">
-                  <LikeButton
-                    postId={post.id}
-                    initialCount={post.likesCount}
-                    initialLiked={post.likedByMe}
-                  />
-<CommentButton postId={post.id} count={post.commentsCount} />                
-</div>
+                  {/* Actions row */}
+                  <div className="flex gap-5 mb-5 mt-2 justify-end">
+                    <LikeButton
+                      postId={post.id}
+                      initialCount={post.likesCount}
+                      initialLiked={post.likedByMe}
+                    />
+                    <ReplyButton postId={post.id} count={post.repliesCount} />
+                  </div>
 
-<CommentList postId={post.id} initialComments={post.comments || []} />
-<CommentForm
-                  postId={post.id}
-                  onSuccess={() => {
-                    setAllPosts((prev) =>
-                      prev.map((p) =>
-                        p.id === post.id
-                          ? { ...p, commentsCount: (p.commentsCount ?? 0) + 1 }
-                          : p
-                      )
-                    );
-                  }}
-                />
-              </li>
-            ))}
+                  {/* Replies */}
+                  <ReplyList postId={post.id} initialReplies={post.replies || []} />
+                  <ReplyForm
+  postId={post.id}
+  onSuccess={(reply) => {
+    setAllPosts((prev) =>
+      prev.map((p) =>
+        p.id === post.id
+          ? {
+              ...p,
+              repliesCount: (p.repliesCount ?? 0) + 1,
+              replies: [...(p.replies || []), reply], // ✅ persist new reply
+            }
+          : p
+      )
+    );
+  }}
+/>
+                </li>
+              ))}
           </ul>
         )}
       </div>

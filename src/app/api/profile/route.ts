@@ -4,9 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
 
+
 export async function GET() {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as any)?.id; // safely extract id
+  const userId = (session?.user as any)?.id;
 
   const posts = await prisma.post.findMany({
     orderBy: { createdAt: "desc" },
@@ -14,14 +15,14 @@ export async function GET() {
       author: {
         select: { id: true, name: true, image: true, username: true },
       },
-      comments: {
+      replies: {
         orderBy: { createdAt: "desc" },
         take: 3,
         select: {
           id: true,
           content: true,
           createdAt: true,
-          user: {
+          author: {
             select: { id: true, name: true, image: true, username: true },
           },
         },
@@ -31,24 +32,23 @@ export async function GET() {
             where: { userId },
             select: { id: true },
           }
-        : false, // ✅ use userId variable here
-      _count: { select: { comments: true, likes: true } },
+        : false,
+      _count: { select: { replies: true, likes: true } },
     },
   });
 
-  // ✅ Map Prisma results into your Post type
   const formatted = posts.map((post) => ({
     id: post.id,
     content: post.content,
     createdAt: post.createdAt.toISOString(),
     author: post.author,
-    comments: post.comments.map((c) => ({
-      ...c,
-      createdAt: c.createdAt.toISOString(),
+    replies: post.replies.map((r) => ({
+      ...r,
+      createdAt: r.createdAt.toISOString(),
     })),
-    commentsCount: post._count.comments,
+    repliesCount: post._count.replies, // ✅ correct
     likesCount: post._count.likes,
-    likedByMe: post.likes ? post.likes.length > 0 : false,
+    likedByMe: Array.isArray(post.likes) && post.likes.length > 0,
   }));
 
   return NextResponse.json(formatted);

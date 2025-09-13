@@ -11,7 +11,7 @@ export default function CreatePost({ onPostCreated }: { onPostCreated?: (p: any)
     if (!content.trim()) return;
 
     try {
-      const res = await fetch("/api/posts/user", {
+      const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),

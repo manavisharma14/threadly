@@ -25,44 +25,48 @@ export default async function ProfilePage() {
     },
   });
 
-const posts = (await prisma.post.findMany({
-  where: { author: { email: session.user.email } },
-  orderBy: { createdAt: "desc" },
-  include: {
-    author: true,
-    comments: {
-      orderBy: { createdAt: "desc" }, 
-      select: {
-        id: true,
-        content: true,
-        createdAt: true,
-        user: {
+  const posts = (
+    await prisma.post.findMany({
+      where: { author: { email: session.user.email } },
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: {
           select: { id: true, name: true, image: true, username: true },
         },
+        replies: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            author: {
+              select: { id: true, name: true, image: true, username: true },
+            },
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            replies: true, // ✅ not comments
+          },
+        },
+        likes: {
+          where: { user: { email: session.user.email } },
+          select: { id: true },
+        },
       },
-    },
-    _count: {
-      select: {
-        likes: true,
-        comments: true,
-      },
-    },
-    likes: {
-      where: { user: { email: session.user.email } },
-      select: { id: true },
-    },
-  },
-})).map(post => ({
-  ...post,
-  createdAt: post.createdAt.toISOString(),
-  likesCount: post._count.likes,
-  commentsCount: post._count.comments,
-  likedByMe: post.likes.length > 0,
-  comments: post.comments.map(c => ({
-    ...c,
-    createdAt: c.createdAt.toISOString(),
-  })),
-}));
+    })
+  ).map((post) => ({
+    ...post,
+    createdAt: post.createdAt.toISOString(),
+    likesCount: post._count.likes,
+    repliesCount: post._count.replies, // ✅ renamed
+    likedByMe: post.likes.length > 0,
+    replies: post.replies.map((r) => ({
+      ...r,
+      createdAt: r.createdAt.toISOString(),
+    })),
+  }));
 
   return <ProfileClient session={session} user={user} posts={posts} />;
 }

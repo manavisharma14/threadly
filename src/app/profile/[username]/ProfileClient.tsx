@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import FollowButton from "@/components/FollowButton";
 import LikeButton from "@/components/LikeButton";
-import CommentButton from "@/components/CommentButton";
-import CommentList from "@/components/CommentList";
-import CommentForm from "@/components/CommentForm";
+import ReplyButton from "@/components/ReplyButton";
+import ReplyList from "@/components/ReplyList";
+import ReplyForm from "@/components/ReplyForm";
 
 interface ProfileClientProps {
   user: any;
@@ -23,13 +23,13 @@ export default function ProfileClient({
 }: ProfileClientProps) {
   // Track posts in state so counts can be updated
   const [allPosts, setAllPosts] = useState(
-    posts.map((p) => ({ ...p, commentsCount: p.commentsCount }))
+    posts.map((p) => ({ ...p, repliesCount: p.repliesCount }))
   );
 
   const handleAddComment = (postId: string) => {
     setAllPosts((prev) =>
       prev.map((p) =>
-        p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
+        p.id === postId ? { ...p, repliesCount: p.repliesCount + 1 } : p
       )
     );
   };
@@ -128,11 +128,11 @@ export default function ProfileClient({
                     initialCount={post.likesCount}
                     initialLiked={post.likedByMe}
                   />
-<CommentButton postId={post.id} count={post.commentsCount} />                
+<ReplyButton postId={post.id} count={post.repliesCount} />                
 </div>
 
-<CommentList postId={post.id } initialComments={post.comments} />
-                <CommentForm
+{/* <ReplyList postId={post.id } initialReplies={post.comments} />
+                <ReplyForm
                   postId={post.id}
                   onSuccess={() => {
                     setAllPosts((prev) =>
@@ -143,7 +143,7 @@ export default function ProfileClient({
                       )
                     );
                   }}
-                />
+                /> */}
               </li>
             ))}
           </ul>

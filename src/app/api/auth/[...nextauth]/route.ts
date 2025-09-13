@@ -1,4 +1,3 @@
-// src/app/api/auth/[...nextauth]/route.ts
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
@@ -17,12 +16,19 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
+  session: { strategy: "database" },
   secret: process.env.NEXTAUTH_SECRET,
+  callbacks: {
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id;
+      session.user.email = user.email; 
+      }
+      return session;
+    },
+  },
 };
 
+// 👇 This is what actually enables /api/auth/* endpoints
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };

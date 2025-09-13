@@ -30,7 +30,8 @@ model User {
 
   // 👇 back-relations
   likes         Like[]
-  comments      Comment[]
+  reposts       Repost[]  
+
 
   followers     Follows[] @relation("followers")
   following     Follows[] @relation("following")
@@ -56,15 +57,32 @@ model Account {
 }
 
 model Post {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  authorId  String   @db.ObjectId
-  author    User     @relation(fields: [authorId], references: [id])
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  authorId   String    @db.ObjectId
+  author     User      @relation(fields: [authorId], references: [id])
 
-  content   String
+  content    String
+  createdAt  DateTime  @default(now())
+
+  // ✅ Self relation for replies
+  parentId   String?   @db.ObjectId
+  parent     Post?     @relation("PostReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies    Post[]    @relation("PostReplies")
+
+  // ✅ Likes
+  likes      Like[]
+  reposts    Repost[]
+}
+model Repost {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  postId    String   @db.ObjectId
   createdAt DateTime @default(now())
 
-  likes     Like[]
-  comments  Comment[]
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId]) // prevent duplicate reposts
 }
 
 model Session {
@@ -101,19 +119,6 @@ model Like {
   @@index([userId])
 }
 
-model Comment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  postId    String   @db.ObjectId
-  content   String
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  @@index([postId])
-  @@index([userId])
-}
 
 model Follows {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
