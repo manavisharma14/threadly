@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import PostPageClient from "./PostPageClient";
 import { Post } from "@/types";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 async function getPostById(id: string, userEmail?: string | null) {
   return prisma.post.findUnique({
