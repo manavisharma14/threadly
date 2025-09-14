@@ -33,7 +33,7 @@ export default function PostPageClient({ post }: { post: Post }) {
           initialLiked={post.likedByMe}
         />
         <ReplyButton
-  postId={post.id}
+  post={post}
   count={replyCount}
   onReplyAdded={(reply) => {
     setReplyCount((c) => c + 1);

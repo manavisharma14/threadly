@@ -63,7 +63,7 @@ function PostItem({
       {/* Post header */}
       <div className="mb-4 flex justify-between items-start">
         <Link href={`/posts/${post.id}`} className="flex-1">
-          <p className="text-gray-200">{post.content}</p>
+          <p className="text-gray-800">{post.content}</p>
           <p className="text-sm text-gray-500 mt-1">
             {new Date(post.createdAt).toLocaleString()}
           </p>
@@ -79,7 +79,7 @@ function PostItem({
               alt={post.author.name || "Author"}
               className="w-6 h-6 rounded-full"
             />
-            <p className="text-sm text-gray-300">{post.author.name}</p>
+            <p className="text-sm text-gray-500">{post.author.name}</p>
           </Link>
         ) : (
           <p className="text-sm text-gray-300">Anonymous</p>
@@ -97,7 +97,7 @@ function PostItem({
 
           {/* Reply button opens modal w/ ReplyForm inside */}
           <ReplyButton
-            postId={post.id}
+            post={post}
             count={replyCount}
             // when reply is added, update local + parent feed
             onReplyAdded={(reply) => {
@@ -109,7 +109,7 @@ function PostItem({
         </div>
       </div>
 
-      {/* Replies list */}
+      {/* Replies list
       {replies.length > 0 && (
         <div className="mt-3 space-y-3">
           {replies.map((reply) => (
@@ -125,7 +125,7 @@ function PostItem({
             </div>
           ))}
         </div>
-      )}
+      )} */}
     </li>
   );
 }

@@ -15,7 +15,7 @@ model User {
   image         String?
 
   // Profile
-  username      String?   @unique
+  username      String?   
   bio           String?
   linkedIn      String?
   website       String?

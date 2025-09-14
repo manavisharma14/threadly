@@ -4,6 +4,7 @@ import CreatePost from "@/components/CreatePost";
 import PostFeed from "@/components/PostFeed";
 import Profile from "@/components/Profile";
 import { Post, User } from "@/types";
+import Link from "next/link";
 
 interface HomePageClientProps {
   initialPosts: Post[];
@@ -16,7 +17,7 @@ export default function HomePageClient({ initialPosts, initialUser }: HomePageCl
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-white text-center mt-10">
+      <h1 className="text-3xl font-bold text-olive text-center mt-10">
         <i>connect</i>Circle
       </h1>
 
@@ -24,17 +25,19 @@ export default function HomePageClient({ initialPosts, initialUser }: HomePageCl
         {/* Left Sidebar */}
         <div className="md:col-span-3 lg:col-span-3 p-4 space-y-4 hidden md:block">
           <Profile user={initialUser} />
+          <Link href="/profile">
+          <div className="mt-4">
+            <button className="w-full text-white bg-olive text-floral py-2 px-4 rounded-2xl hover:bg-olive/70 transition">
+              Profile
+            </button>
+          </div>
+          </Link>
         </div>
 
-        {/* Main Content */}
-        <div className="col-span-1 md:col-span-5 lg:col-span-6 p-4 space-y-4">
+        {/* Main Content (now bigger since no right sidebar) */}
+        <div className="col-span-1 md:col-span-5 lg:col-span-9 p-4 space-y-4">
           <CreatePost onPostCreated={setNewPost} />
           <PostFeed newPost={newPost} posts={posts} />
-        </div>
-
-        {/* Right Sidebar */}
-        <div className="md:col-span-3 lg:col-span-3 p-4 space-y-4 hidden md:block">
-          <div className="bg-olive/20 rounded-xl p-4 shadow">Right sidebar</div>
         </div>
       </div>
     </div>

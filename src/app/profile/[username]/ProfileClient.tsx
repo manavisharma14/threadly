@@ -128,7 +128,7 @@ export default function ProfileClient({
                     initialCount={post.likesCount}
                     initialLiked={post.likedByMe}
                   />
-<ReplyButton postId={post.id} count={post.repliesCount} />                
+<ReplyButton post={post} count={post.repliesCount} />                
 </div>
 
 {/* <ReplyList postId={post.id } initialReplies={post.comments} />

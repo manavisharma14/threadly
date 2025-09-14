@@ -6,16 +6,25 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 type Params = { params: { id: string } };
 
 // GET single post + its replies
+// GET single post + its replies// GET single post + its replies
 export async function GET(req: NextRequest, { params }: Params) {
   try {
+    const session = await getServerSession(authOptions);
+
     const post = await prisma.post.findUnique({
       where: { id: params.id },
       include: {
         author: { select: { id: true, name: true, image: true, username: true } },
+        _count: { select: { replies: true, likes: true } },
         replies: {
-          include: { author: true },
+          include: {
+            author: { select: { id: true, name: true, image: true, username: true } },
+            _count: { select: { likes: true } },
+            likes: { select: { userId: true } }, // ✅ needed for likedByMe
+          },
           orderBy: { createdAt: "asc" },
         },
+        likes: { select: { userId: true } }, // ✅ needed for likedByMe
       },
     });
 
@@ -23,14 +32,30 @@ export async function GET(req: NextRequest, { params }: Params) {
       return NextResponse.json({ message: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(post);
+    const likedByMe = session?.user?.id
+      ? post.likes.some((like) => like.userId === session.user.id)
+      : false;
+
+    const formattedPost = {
+      ...post,
+      likesCount: post._count.likes,
+      repliesCount: post._count.replies,
+      likedByMe, // ✅ send to frontend
+      replies: post.replies.map((r) => ({
+        ...r,
+        likesCount: r._count.likes,
+        likedByMe: session?.user?.id
+          ? r.likes.some((like) => like.userId === session.user.id)
+          : false,
+      })),
+    };
+
+    return NextResponse.json(formattedPost);
   } catch (err) {
     console.error("Error fetching post:", err);
     return NextResponse.json({ error: "Failed to fetch post" }, { status: 500 });
   }
 }
-
-// POST a reply
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const session = await getServerSession(authOptions);

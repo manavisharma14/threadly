@@ -22,6 +22,13 @@ const posts = await prisma.post.findMany({
         author: {
           select: { id: true, name: true, image: true, username: true },
         },
+        _count: { select: { likes: true } }, // ✅ add count
+        likes: session?.user?.email
+          ? {
+              where: { user: { email: session.user.email } },
+              select: { id: true },
+            }
+          : false,
       },
       orderBy: { createdAt: "asc" },
     },

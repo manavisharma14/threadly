@@ -6,3 +6,8 @@ body {
   @apply bg-smoky text-floral;
 }
 
+
+/* globals.css */
+[data-radix-dialog-content] {
+  border-radius: 1rem !important; /* same as rounded-2xl */
+}

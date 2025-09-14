@@ -47,7 +47,7 @@ export default async function ProfilePage() {
         _count: {
           select: {
             likes: true,
-            replies: true, // ✅ not comments
+            replies: true, 
           },
         },
         likes: {

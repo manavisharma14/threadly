@@ -16,10 +16,10 @@ module.exports = {
   		},
   		colors: {
 			// smoky: "#11120D",
-			smoky: "#071018",
-			olive: "#1C2B38",
-			bone: "#454641",
-			floral: "white",
+			smoky: "#F8F7F4",
+			olive: "#6B705C",
+			bone: "#6B705C",
+			floral: "#2D2D2D",
   	}
 }
   },

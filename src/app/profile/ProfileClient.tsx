@@ -95,6 +95,7 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
           <p className="text-sm text-floral/70">{user?.email}</p>
 
           <div className="mt-3 space-y-1 text-sm">
+            <p className="text-floral">{username}</p>
             <p className="text-floral">{bio || "No bio yet."}</p>
             <p className="text-floral">LinkedIn: {linkedin || "—"}</p>
             <p className="text-floral">Website: {website || "—"}</p>
@@ -108,17 +109,77 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
             Edit Profile
           </DialogTrigger>
           <DialogContent className="bg-smoky text-floral border border-olive/40">
-            <DialogHeader>
-              <DialogTitle>Edit profile</DialogTitle>
-              <DialogDescription>
-                Update what others see on your profile.
-              </DialogDescription>
-            </DialogHeader>
+  <DialogHeader>
+    <DialogTitle>Edit profile</DialogTitle>
+    <DialogDescription>
+      Update what others see on your profile.
+    </DialogDescription>
+  </DialogHeader>
 
-            <form onSubmit={handleSave} className="space-y-4">
-              {/* inputs go here */}
-            </form>
-          </DialogContent>
+  <form onSubmit={handleSave} className="space-y-4">
+    <div>
+      <label className="block text-sm text-floral/80 mb-1">Username</label>
+      <input
+        type="text"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm text-floral/80 mb-1">Bio</label>
+      <textarea
+        value={bio}
+        onChange={(e) => setBio(e.target.value)}
+        className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
+        rows={3}
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm text-floral/80 mb-1">LinkedIn</label>
+      <input
+        type="url"
+        value={linkedin}
+        onChange={(e) => setLinkedin(e.target.value)}
+        className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm text-floral/80 mb-1">Website</label>
+      <input
+        type="url"
+        value={website}
+        onChange={(e) => setWebsite(e.target.value)}
+        className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm text-floral/80 mb-1">Building</label>
+      <input
+        type="text"
+        value={building}
+        onChange={(e) => setBuilding(e.target.value)}
+        className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
+      />
+    </div>
+
+    {/* Save button */}
+    <div className="flex justify-end gap-2">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => setOpen(false)}
+      >
+        Cancel
+      </Button>
+      <Button type="submit">Save</Button>
+    </div>
+  </form>
+</DialogContent>
         </Dialog>
       </div>
 
@@ -166,13 +227,28 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
                       initialCount={post.likesCount}
                       initialLiked={post.likedByMe}
                     />
-                    <ReplyButton postId={post.id} count={post.repliesCount} />
-                  </div>
+<ReplyButton
+  post={post}
+  count={post.repliesCount}
+  onReplyAdded={(reply) => {
+    setAllPosts((prev) =>
+      prev.map((p) =>
+        p.id === post.id
+          ? {
+              ...p,
+              repliesCount: (p.repliesCount ?? 0) + 1,
+              replies: [...(p.replies || []), reply],
+            }
+          : p
+      )
+    );
+  }}
+/>                  </div>
 
                   {/* Replies */}
-                  <ReplyList postId={post.id} initialReplies={post.replies || []} />
-                  <ReplyForm
-  postId={post.id}
+                  {/* <ReplyList postId={post.id} initialReplies={post.replies || []} /> */}
+                  {/* <ReplyForm
+  post={post}
   onSuccess={(reply) => {
     setAllPosts((prev) =>
       prev.map((p) =>
@@ -186,7 +262,7 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
       )
     );
   }}
-/>
+/> */}
                 </li>
               ))}
           </ul>

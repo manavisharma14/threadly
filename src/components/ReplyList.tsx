@@ -4,7 +4,7 @@ import { Post } from "@/types";
 
 export default function ReplyList({
   postId,
-  replies,
+  replies = [],
   onReplyAdded,
 }: {
   postId: string;
@@ -17,8 +17,8 @@ export default function ReplyList({
         <Link
           key={reply.id}
           href={`/posts/${reply.id}`}
-          className="block ml-4 border-l pl-4 rounded-md bg-gray-800/40 hover:bg-gray-700/60 
-                     transition cursor-pointer text-sm text-gray-200 p-2"
+          className="block ml-4 border-l pl-4 rounded-md 
+                      cursor-pointer text-sm text-gray-800 p-2 w-full"
         >
           <p>
             <span className="font-semibold">{reply.author?.name}</span> —{" "}

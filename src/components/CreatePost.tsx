@@ -42,7 +42,7 @@ export default function CreatePost({ onPostCreated }: { onPostCreated?: (p: any)
         />
         <Button
           onClick={handleSubmit}
-          className="mt-2 bg-olive hover:bg-blue-950 text-white px-4 py-2 rounded"
+          className="mt-2 bg-olive hover:bg-olive/70 text-white px-4 py-2 rounded"
         >
           POST!
         </Button>
