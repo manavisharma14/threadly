@@ -7,7 +7,7 @@ export type TimelinePost = Post & {
 export type TimelineRepost = {
   type: "repost";
   id: string;
-  count: number; // Represents reposts count for the post
+  count: number; 
   createdAt: string;
   post: Post;
 };
