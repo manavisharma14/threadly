@@ -1,3 +1,4 @@
+// schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,26 +14,18 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-
-  // Profile
   username      String?   @unique
   bio           String?
   linkedIn      String?
   website       String?
   building      String?
-
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
   accounts      Account[]
   sessions      Session[]
   posts         Post[]
-
-  // 👇 back-relations
   likes         Like[]
-  reposts       Repost[]  
-
-
+  reposts       Repost[]
   followers     Follows[] @relation("followers")
   following     Follows[] @relation("following")
 }
@@ -50,9 +43,7 @@ model Account {
   scope             String?
   id_token          String? @db.String
   session_state     String?
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([provider, providerAccountId])
 }
 
@@ -60,29 +51,23 @@ model Post {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
   authorId   String    @db.ObjectId
   author     User      @relation(fields: [authorId], references: [id])
-
   content    String
   createdAt  DateTime  @default(now())
-
-  // ✅ Self relation for replies
   parentId   String?   @db.ObjectId
   parent     Post?     @relation("PostReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   replies    Post[]    @relation("PostReplies")
-
-  // ✅ Likes
   likes      Like[]
   reposts    Repost[]
 }
+
 model Repost {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
   postId    String   @db.ObjectId
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, postId]) // prevent duplicate reposts
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@unique([userId, postId])
 }
 
 model Session {
@@ -90,8 +75,7 @@ model Session {
   sessionToken String   @unique
   userId       String   @db.ObjectId
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -99,7 +83,6 @@ model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
-
   @@unique([identifier, token])
 }
 
@@ -108,25 +91,18 @@ model Like {
   userId    String   @db.ObjectId
   postId    String   @db.ObjectId
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  // One like per user per post
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   @@unique([userId, postId])
-
   @@index([postId])
   @@index([userId])
 }
-
 
 model Follows {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   followerId  String   @db.ObjectId
   followingId String   @db.ObjectId
-
-  follower    User @relation("following", fields: [followerId], references: [id])
-  following   User @relation("followers", fields: [followingId], references: [id])
-
-  @@unique([followerId, followingId]) // prevent duplicate follows
+  follower    User     @relation("following", fields: [followerId], references: [id])
+  following   User     @relation("followers", fields: [followingId], references: [id])
+  @@unique([followerId, followingId])
 }

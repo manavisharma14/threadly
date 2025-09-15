@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 
-
 export async function GET() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
@@ -33,7 +32,7 @@ export async function GET() {
             select: { id: true },
           }
         : false,
-      _count: { select: { replies: true, likes: true } },
+      _count: { select: { replies: true, likes: true, reposts:true } },
     },
   });
 

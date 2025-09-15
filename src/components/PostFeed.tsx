@@ -1,44 +1,100 @@
+// components/PostFeed.tsx
 "use client";
 import { useState, useEffect } from "react";
 import LikeButton from "@/components/LikeButton";
-import ReplyButton from "./ReplyButton";
+import ReplyButton from "@/components/ReplyButton";
 import Link from "next/link";
-import ReplyForm from "./ReplyForm";
-import { Post } from "@/types";
+import { Repeat2 } from "lucide-react";
+import RepostButton from "@/components/RepostButton";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Post, Reply, User } from "@/types";
+import { TimelineItem } from "@/types/timeline";
 
 interface PostFeedProps {
-  posts: Post[];
+  posts: TimelineItem[];
   newPost?: Post;
+  currentUser: User | null;
 }
 
-export default function PostFeed({ posts: initialPosts, newPost }: PostFeedProps) {
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
-
+export default function PostFeed({ posts: initialPosts, newPost, currentUser }: PostFeedProps) {
+  const [posts, setPosts] = useState<TimelineItem[]>(
+    initialPosts.filter((p) => p.type === "post")
+  );
   useEffect(() => {
     if (newPost && !newPost.parentId) {
-      setPosts((prev) => [newPost, ...prev]);
+      setPosts((prev) => [{ type: "post", ...newPost }, ...prev]);
     }
   }, [newPost]);
 
+  const normalizePost = (item: TimelineItem): Post => {
+    if (item.type === "post") {
+      return item;
+    }
+    return {
+      ...item.post,
+      parentId: null,
+      replies: item.post.replies || [],
+    };
+  };
+
   return (
     <div>
+      <ToastContainer />
       <h2 className="text-xl font-semibold mb-4">Recent Posts</h2>
       <ul>
-        {posts.map((post) => (
+        {posts.map((item) => (
           <PostItem
-            key={post.id}
-            post={post}
+            key={item.id}
+            item={item}
+            currentUser={currentUser}
             onReplyAdded={(reply) => {
               setPosts((prev) =>
-                prev.map((p) =>
-                  p.id === post.id
+                prev.map((p) => {
+                  const isMatch =
+                    p.type === "post" && item.type === "post" && p.id === item.id 
+                  //   p.type === "repost" && item.type === "repost" && p.post.id === item.post.id;
+                  // if (!isMatch) return p;
+                  return p.type === "post"
                     ? {
                         ...p,
                         repliesCount: (p.repliesCount ?? 0) + 1,
                         replies: [...(p.replies || []), reply],
                       }
-                    : p
-                )
+                    : {
+                        ...p,
+                        count: p.count,
+                        post: {
+                          ...p.post,
+                          repliesCount: (p.post.repliesCount ?? 0) + 1,
+                          replies: [...(p.post.replies || []), reply],
+                        },
+                      };
+                })
+              );
+            }}
+            onRepostToggle={(reposted) => {
+              setPosts((prev) =>
+                prev.map((p) => {
+                  const isMatch =
+                    p.type === "post" && item.type === "post" && p.id === item.id ||
+                    p.type === "repost" && item.type === "repost" && p.post.id === item.post.id;
+                  if (!isMatch) return p;
+                  return p.type === "post"
+                    ? {
+                        ...p,
+                        repostedByMe: reposted,
+                        repostsCount: reposted ? p.repostsCount + 1 : p.repostsCount - 1,
+                      }
+                    : {
+                        ...p,
+                        post: {
+                          ...p.post,
+                          repostedByMe: reposted,
+                          repostsCount: reposted ? p.post.repostsCount + 1 : p.post.repostsCount - 1,
+                        },
+                      };
+                })
               );
             }}
           />
@@ -49,18 +105,29 @@ export default function PostFeed({ posts: initialPosts, newPost }: PostFeedProps
 }
 
 function PostItem({
-  post,
+  item,
+  currentUser,
   onReplyAdded,
+  onRepostToggle,
 }: {
-  post: Post;
-  onReplyAdded: (reply: Post) => void;
+  item: TimelineItem;
+  currentUser: User | null;
+  onReplyAdded: (reply: Reply) => void;
+  onRepostToggle: (reposted: boolean) => void;
 }) {
+  const post = item.type === "post" ? item : item.post;
+  const isRepost = item.type === "repost";
   const [replyCount, setReplyCount] = useState(post.repliesCount ?? 0);
-  const [replies, setReplies] = useState<Post[]>(post.replies || []);
+  const [replies, setReplies] = useState<Reply[]>(post.replies || []);
 
   return (
     <li className="border-b border-gray-700 py-4">
-      {/* Post header */}
+      {isRepost && (
+        <div className="flex items-center gap-2 mb-2 text-sm text-gray-500">
+          <Repeat2 size={16} />
+          <span>Reposted by {currentUser?.username || currentUser?.name || "You"}</span>
+        </div>
+      )}
       <div className="mb-4 flex justify-between items-start">
         <Link href={`/posts/${post.id}`} className="flex-1">
           <p className="text-gray-800">{post.content}</p>
@@ -86,46 +153,30 @@ function PostItem({
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-col mt-2">
-        <div className="flex gap-5 mb-5 mt-2 justify-start">
-          <LikeButton
-            postId={post.id}
-            initialCount={post.likesCount}
-            initialLiked={post.likedByMe}
-          />
+      <div className="flex gap-5 mb-5 mt-2 justify-start">
+        <LikeButton
+          postId={post.id}
+          initialCount={post.likesCount}
+          initialLiked={post.likedByMe}
+        />
 
-          {/* Reply button opens modal w/ ReplyForm inside */}
-          <ReplyButton
-            post={post}
-            count={replyCount}
-            // when reply is added, update local + parent feed
-            onReplyAdded={(reply) => {
-              setReplyCount((c) => c + 1);
-              setReplies((prev) => [...prev, reply]);
-              onReplyAdded(reply);
-            }}
-          />
-        </div>
+        <ReplyButton
+          post={post}
+          count={replyCount}
+          onReplyAdded={(reply) => {
+            setReplyCount((c) => c + 1);
+            setReplies((prev) => [...prev, reply]);
+            onReplyAdded(reply);
+          }}
+        />
+
+<RepostButton
+  postId={post.id}
+  count={post.repostsCount}
+  initiallyReposted={post.repostedByMe ?? false}
+  onRepostToggle={onRepostToggle}
+/>
       </div>
-
-      {/* Replies list
-      {replies.length > 0 && (
-        <div className="mt-3 space-y-3">
-          {replies.map((reply) => (
-            <div
-              key={reply.id}
-              className="ml-4 border-l border-gray-600 pl-4 text-sm text-gray-300"
-            >
-              <p>
-                <span className="font-semibold">{reply.author?.name}</span> —{" "}
-                {new Date(reply.createdAt).toLocaleString()}
-              </p>
-              <p>{reply.content}</p>
-            </div>
-          ))}
-        </div>
-      )} */}
     </li>
   );
 }

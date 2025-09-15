@@ -8,7 +8,7 @@ export async function GET() {
   if (!session?.user?.id) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
-
+  
   const posts = await prisma.post.findMany({
     where: { authorId: session.user.id },
     orderBy: { createdAt: "desc" },
