@@ -24,7 +24,8 @@ type RepostWithPost = Prisma.RepostGetPayload<{
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
 
-  // Fetch posts
+  
+
   const posts = await prisma.post.findMany({
     where: { parentId: null },
     orderBy: { createdAt: 'desc' },
@@ -168,8 +169,16 @@ export default async function HomePage() {
     likedByMe: session?.user?.email ? post.likes.length > 0 : false,
     repostedByMe: session?.user?.email ? post.reposts.length > 0 : false,
     replies: post.replies.map((r) => ({
-      ...r,
+      id: r.id,
+      content: r.content,
       createdAt: r.createdAt.toISOString(),
+      parentId: r.parentId ?? null,
+      author: r.author,
+      repliesCount: 0, // Assuming replies count is not applicable for reposts
+      likesCount: r._count.likes,
+      likedByMe: session?.user?.email ? r.likes.length > 0 : false,
+      repostsCount: 0, // Assuming reposts are not applicable for replies
+      replies: [], // Assuming nested replies are not included
     })),
   }));
 
@@ -193,8 +202,16 @@ export default async function HomePage() {
         likedByMe: session?.user?.email ? r.post!.likes.length > 0 : false,
         repostedByMe: true,
         replies: r.post!.replies.map((reply) => ({
-          ...reply,
+          id: reply.id,
+          content: reply.content,
           createdAt: reply.createdAt.toISOString(),
+          parentId: reply.parentId ?? null,
+          author: reply.author,
+          repliesCount: 0, // Assuming replies count is not applicable for replies
+          likesCount: reply._count.likes,
+          likedByMe: session?.user?.email ? reply.likes.length > 0 : false,
+          repostsCount: 0, // Assuming reposts are not applicable for replies
+          replies: [], // Assuming nested replies are not included
         })),
       },
     }));

@@ -27,7 +27,7 @@ async function getPostById(id: string, userEmail?: string | null) {
         },
         orderBy: { createdAt: "asc" },
       },
-      _count: { select: { replies: true, likes: true } },
+      _count: { select: { replies: true, likes: true, reposts: true } },
       likes: userEmail
         ? {
             where: { user: { email: userEmail } },
@@ -38,23 +38,35 @@ async function getPostById(id: string, userEmail?: string | null) {
   });
 }
 
-export default async function PostPage({ params }: { params: { id: string } }) {
+export default async function PostPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const session = await getServerSession(authOptions);
 
-  const post = await getPostById(params.id, session?.user?.email);
+  // Await the params promise to resolve the id
+  const { id } = await params;
+
+  const post = await getPostById(id, session?.user?.email);
   if (!post) notFound();
 
   const safePost: Post = {
     ...post,
     createdAt: post.createdAt.toISOString(),
     repliesCount: post._count.replies,
+    repostsCount: post._count.reposts,
     likesCount: post._count.likes,
     likedByMe: session?.user?.email ? post.likes.length > 0 : false,
     replies: post.replies.map((r) => ({
       ...r,
       createdAt: r.createdAt.toISOString(),
+      replies: [],
+      repliesCount: 0,
+      repostsCount: 0,
       likesCount: r._count.likes,
       likedByMe: session?.user?.email ? r.likes.length > 0 : false,
+      repostedByMe: false,
     })),
   };
 

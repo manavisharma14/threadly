@@ -5,11 +5,11 @@ import { prisma } from "@/lib/prisma";
 export default async function FollowersPage({
   searchParams,
 }: {
-  searchParams: { userId?: string };
+  searchParams: Promise<{ userId?: string }>;
 })  {
 
 
-    const userId = searchParams.userId;
+    const userId = (await searchParams).userId!;
 
     const followers = await prisma.follows.findMany({
       where: { followingId: userId },

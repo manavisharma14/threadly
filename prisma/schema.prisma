@@ -86,6 +86,7 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+
 model Like {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId

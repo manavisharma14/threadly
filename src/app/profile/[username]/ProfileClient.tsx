@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import FollowButton from "@/components/FollowButton";
@@ -7,12 +6,20 @@ import LikeButton from "@/components/LikeButton";
 import ReplyButton from "@/components/ReplyButton";
 import RepostButton from "@/components/RepostButton";
 import { TimelineItem, TimelinePost, TimelineRepost } from "@/types/timeline";
+import { Post, User as BaseUser } from "@/types";
+
+interface User extends BaseUser {
+  _count?: {
+    followers?: number;
+    following?: number;
+  };
+}
 
 interface ProfileClientProps {
-  user: any;
+  user: User;
   currentUserId: string;
   isFollowing: boolean;
-  posts: any[];
+  posts: TimelineItem[];
 }
 
 export default function ProfileClient({
@@ -21,22 +28,22 @@ export default function ProfileClient({
   isFollowing,
   posts,
 }: ProfileClientProps) {
-  const [allPosts, setAllPosts] = useState(
+  const [allPosts, setAllPosts] = useState<TimelineItem[]>(
     posts.map((p) =>
       p.type === "repost"
         ? {
-            ...p,
-            post: {
-              ...p.post,
-              repliesCount: p.post.repliesCount ?? 0,
-              repostsCount: p.post.repostsCount ?? 0,
-            },
-          }
+          ...p,
+          post: {
+            ...p.post,
+            repliesCount: p.post.repliesCount ?? 0,
+            repostsCount: p.post.repostsCount ?? 0,
+          },
+        }
         : {
-            ...p,
-            repliesCount: p.repliesCount ?? 0,
-            repostsCount: p.repostsCount ?? 0,
-          }
+          ...p,
+          repliesCount: p.repliesCount ?? 0,
+          repostsCount: p.repostsCount ?? 0,
+        }
     )
   );
 
@@ -90,20 +97,20 @@ export default function ProfileClient({
           )}
           <div className="flex gap-2">
             <Button
-              className="bg-floral/80 text-smoky rounded-full px-4 py-1"
+              className="bg-olive/80 text-smoky rounded-full px-4 py-1"
               onClick={() =>
                 (window.location.href = `/followers?userId=${user.id}`)
               }
             >
-              Followers {user._count.followers}
+              Followers {user._count?.followers ?? 0}
             </Button>
             <Button
-              className="bg-floral/80 text-smoky rounded-full px-4 py-1"
+              className="bg-olive/80 text-smoky rounded-full px-4 py-1"
               onClick={() =>
                 (window.location.href = `/following?userId=${user.id}`)
               }
             >
-              Following {user._count.following}
+              Following {user._count?.following ?? 0}
             </Button>
           </div>
         </div>
@@ -121,7 +128,7 @@ export default function ProfileClient({
           <ul className="space-y-4">
             {allPosts.map((item) => {
               const isRepost = item.type === "repost";
-              const post = isRepost ? item.post : item;
+              const post = isRepost ? (item as TimelineRepost).post : (item as TimelinePost);
               const repostedAt = isRepost ? item.createdAt : null;
 
               return (
@@ -132,7 +139,7 @@ export default function ProfileClient({
                   {/* Repost Meta */}
                   {isRepost && (
                     <p className="text-xs text-olive mb-2 italic">
-                      You reposted on{" "}
+                      {user.name} reposted on{" "}
                       {new Date(repostedAt!).toLocaleString()}
                     </p>
                   )}
@@ -140,8 +147,8 @@ export default function ProfileClient({
                   {/* Post Content */}
                   <div className="flex items-center gap-3">
                     <img
-                      src={post.author?.image || ""}
-                      alt=""
+                      src={post.author?.image || "/default-avatar.png"}
+                      alt={post.author?.name || "Author"}
                       className="w-8 h-8 rounded-full"
                     />
                     <div className="flex-1">
@@ -164,44 +171,42 @@ export default function ProfileClient({
                       count={post.repliesCount}
                       onReplyAdded={() => handleAddComment(post.id)}
                     />
+                    <div className="flex items-center gap-1 text-gray-500 text-sm">
+                      <RepostButton
+                        postId={post.id}
+                        count={post.repostsCount}
+                        initiallyReposted={post.repostedByMe ?? false}
+                        onRepostToggle={(newState) => {
+                          setAllPosts((prev) =>
+                            prev.map((p) =>
+                              (p.type === "post" && p.id === post.id) ||
+                                (p.type === "repost" && p.post.id === post.id)
+                                ? p.type === "post"
+                                  ? {
+                                    ...p,
+                                    repostedByMe: newState,
+                                    repostsCount: newState
+                                      ? p.repostsCount + 1
+                                      : Math.max(0, p.repostsCount - 1),
+                                  }
+                                  : {
+                                    ...p,
+                                    post: {
+                                      ...p.post,
+                                      repostedByMe: newState,
+                                      repostsCount: newState
+                                        ? p.post.repostsCount + 1
+                                        : Math.max(0, p.post.repostsCount - 1),
+                                    },
+                                  }
+                                : p
+                            )
+                          );
+                        }}
+                        disabled={post.author?.id === currentUserId}
+                      />
 
-<div className="flex items-center gap-1 text-gray-500 text-sm">
-<RepostButton
-  postId={post.id}
-  initiallyReposted={post.repostedByMe ?? false}
-  onRepostToggle={(newState) => {
-    setAllPosts((prev) =>
-      prev.map((p) =>
-        (p.type === "post" && p.id === post.id) ||
-        (p.type === "repost" && p.post.id === post.id)
-          ? p.type === "post"
-            ? {
-                ...p,
-                repostedByMe: newState,
-                repostsCount: newState
-                  ? p.repostsCount + 1
-                  : Math.max(0, p.repostsCount - 1),
-              }
-            : {
-                ...p,
-                post: {
-                  ...p.post,
-                  repostedByMe: newState,
-                  repostsCount: newState
-                    ? p.post.repostsCount + 1
-                    : Math.max(0, p.post.repostsCount - 1),
-                },
-              }
-          : p
-      )
-    );
-  }}
-/>
-  <span>
-    {post.repostsCount ?? 0}
-  </span>
-</div>
-
+                    </div>
                   </div>
                 </li>
               );

@@ -18,3 +18,5 @@ export function AuthButtons({ session }: { session: any }) {
 
   return <button onClick={() => signIn()}>Sign In</button>;
 }
+
+

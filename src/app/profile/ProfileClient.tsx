@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { TimelineItem, TimelinePost, TimelineRepost } from "@/types/timeline";
 import { Post } from "@/types";
+import ReplyList from "@/components/ReplyList";
 
 type ProfileClientProps = {
   session: Session;
@@ -36,6 +37,7 @@ type ProfileClientProps = {
 export default function ProfileClient({ session, user, posts }: ProfileClientProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const [username, setUsername] = useState(user?.username ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
@@ -44,6 +46,12 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
   const [building, setBuilding] = useState(user?.building ?? "");
 
   const [allPosts, setAllPosts] = useState<TimelineItem[]>(posts);
+
+  useEffect(() => {
+    if (!user?.username) {
+      setOpen(true); // auto open modal if username missing
+    }
+  }, [user]);
 
   // Save profile
   const handleSave = async (e: React.FormEvent) => {
@@ -93,6 +101,39 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
 
   return (
     <div className="mt-10 p-6 w-3/4 mx-auto space-y-8">
+      {!user?.username && (
+        <Dialog open={open} onOpenChange={() => { }}>
+          <DialogContent className="!rounded-3xl bg-white dark:bg-smoky text-floral border border-olive/30 max-w-md shadow-xl">
+            <DialogHeader>
+              <DialogTitle className="text-center text-lg font-bold">
+                Pick your username
+              </DialogTitle>
+              <DialogDescription className="text-center text-sm">
+                This will be your unique name across CampusCircle.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSave} className="space-y-4">
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
+                required
+                className="w-full px-4 py-2 rounded-xl bg-gray-100 text-sm text-black focus:outline-none focus:ring-2 focus:ring-olive"
+              />
+              <div className="flex justify-center">
+                <Button
+                  type="submit"
+                  className="bg-olive text-white px-6 py-2 rounded-full hover:bg-olive/80 transition"
+                >
+                  Save & Continue
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
       {/* Profile Header */}
       <div className="flex items-center gap-6 bg-olive/20 rounded-xl shadow-md p-6">
         <img
@@ -111,11 +152,11 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
             <p className="text-floral">Building: {building || "—"}</p>
           </div>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogTrigger className="ml-auto bg-olive text-white px-4 py-2 rounded-xl hover:bg-olive/60">
             Edit Profile
           </DialogTrigger>
-          <DialogContent className="bg-smoky text-floral border border-olive/40">
+          <DialogContent className="!rounded-3xl bg-smoky text-floral border border-olive/40">
             <DialogHeader>
               <DialogTitle>Edit profile</DialogTitle>
               <DialogDescription>
@@ -123,18 +164,12 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSave} className="space-y-4">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
-              />
+
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Bio"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
+                className="w-full px-3 py-2 rounded-xl bg-gray-100 text-black border border-gray-300  focus:outline-none focus:ring-2 focus:ring-olive"
                 rows={3}
               />
               <input
@@ -142,27 +177,37 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
                 value={linkedin}
                 onChange={(e) => setLinkedin(e.target.value)}
                 placeholder="LinkedIn"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
+                className="w-full px-3 py-2 rounded-xl bg-gray-100 text-black border border-gray-300  focus:outline-none focus:ring-2 focus:ring-olive"
               />
               <input
                 type="url"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
                 placeholder="Website"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
+                className="w-full px-3 py-2 rounded-xl bg-gray-100 text-black border border-gray-300  focus:outline-none focus:ring-2 focus:ring-olive"
               />
               <input
                 type="text"
                 value={building}
                 onChange={(e) => setBuilding(e.target.value)}
                 placeholder="Building"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-floral border border-gray-600"
+                className="w-full px-3 py-2 rounded-xl bg-gray-100 text-black border border-gray-300  focus:outline-none focus:ring-2 focus:ring-olive"
               />
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                <Button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="bg-transparent text-gray-600 dark:text-gray-300 hover:text-olive hover:bg-olive/10 dark:hover:bg-olive/20 transition"
+                >
                   Cancel
                 </Button>
-                <Button type="submit">Save</Button>
+
+                <Button
+                  type="submit"
+                  className="bg-olive text-white hover:bg-olive/80 transition px-4 py-2 rounded-md"
+                >
+                  Save
+                </Button>
               </div>
             </form>
           </DialogContent>
@@ -183,20 +228,20 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
               )
               .map((item) => {
                 const isRepost = item.type === "repost";
-              const post = isRepost ? item.post : item;
-              const repostedAt = isRepost ? item.createdAt : null;
+                const post = isRepost ? item.post : item;
+                const repostedAt = isRepost ? item.createdAt : null;
                 return (
                   <li
                     key={item.id}
                     className="p-4 rounded-lg bg-smoky border-b border-olive/40"
                   >
 
-{isRepost && (
-                    <p className="text-xs text-olive mb-2 italic">
-                      You reposted on{" "}
-                      {new Date(repostedAt!).toLocaleString()}
-                    </p>
-                  )}  
+                    {isRepost && (
+                      <p className="text-xs text-olive mb-2 italic">
+                        You reposted on{" "}
+                        {new Date(repostedAt!).toLocaleString()}
+                      </p>
+                    )}
                     {/* Header */}
                     <div className="flex items-center gap-3">
                       <img
@@ -273,6 +318,8 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
                           );
                         }}
                       />
+
+
                       {/* <RepostButton
   postId={post.id}
   initiallyReposted={post.repostedByMe ?? false}
@@ -310,6 +357,38 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
   }}
 /> */}
                     </div>
+                    <ReplyList
+                      postId={post.id}
+                      replies={post.replies || []}
+                      onReplyAdded={(reply: Post) => {
+                        setAllPosts((prev): TimelineItem[] =>
+                          prev.map((p) => {
+                            if (p.type === "post" && p.id === post.id) {
+                              const updated: TimelinePost = {
+                                ...p,
+                                repliesCount: p.repliesCount + 1,
+                                replies: [
+                                  ...p.replies,
+                                  {
+                                    ...reply,
+                                    createdAt: reply.createdAt, // Already a string from the Post type
+                                    parentId: post.id, // Set parentId to the current post's ID
+                                    replies: [], // Initialize empty replies array (no nesting assumed)
+                                    repliesCount: 0, // New reply has no replies
+                                    likesCount: 0, // New reply has no likes
+                                    repostsCount: 0, // New reply has no reposts
+                                    likedByMe: false, // New reply not liked by current user
+                                    repostedByMe: false, // New reply not reposted by current user
+                                  },
+                                ],
+                              };
+                              return updated;
+                            }
+                            return p;
+                          })
+                        );
+                      }}
+                    />
                   </li>
                 );
               })}

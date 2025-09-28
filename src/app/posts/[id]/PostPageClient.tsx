@@ -4,10 +4,19 @@ import ReplyButton from "@/components/ReplyButton";
 import LikeButton from "@/components/LikeButton";
 import ReplyList from "@/components/ReplyList";
 import { Post } from "@/types";
+import RepostButton from "@/components/RepostButton";
+// import { Reply } from "@/types";
 
 export default function PostPageClient({ post }: { post: Post }) {
   const [replyCount, setReplyCount] = useState(post.repliesCount ?? 0);
   const [replies, setReplies] = useState<Post[]>(post.replies || []);
+  const [repostsCount, setRepostsCount] = useState(post.repostsCount ?? 0);
+  const [repostedByMe, setRepostedByMe] = useState(post.repostedByMe ?? false);
+
+  const onRepostToggle = (reposted: boolean) => {
+    setRepostsCount((prev) => (reposted ? prev + 1 : prev - 1));
+    setRepostedByMe(reposted);
+  };
 
   return (
     <div className="w-1/2 mx-auto mt-10 p-4 bg-dark rounded-lg">
@@ -33,22 +42,41 @@ export default function PostPageClient({ post }: { post: Post }) {
           initialLiked={post.likedByMe}
         />
         <ReplyButton
-  post={post}
-  count={replyCount}
-  onReplyAdded={(reply) => {
-    setReplyCount((c) => c + 1);
-    setReplies((prev) => [...prev, reply]); // ✅ add reply to local state
-  }}
-/>
+          post={post}
+          count={replyCount}
+          onReplyAdded={(reply) => {
+            setReplyCount((c) => c + 1);
+            setReplies((prev) => [...prev, reply]);
+          }}
+        />
+        
+
+        <RepostButton
+          postId={post.id}
+          count={post.repostsCount}
+          initiallyReposted={post.repostedByMe ?? false}
+          onRepostToggle={onRepostToggle}
+        />
+
+
+      </div>
+      <div className="mt-8 border-t pt-4 items-center justify-center align-middle">
+        <ReplyList
+          postId={post.id}
+
+          replies={replies}
+          onReplyAdded={(reply: Post) => {
+            setReplyCount((c) => c + 1)
+            setReplies((prev) => [
+              ...prev,
+              { ...reply, replies: [], repliesCount: 0, likesCount: 0, likedByMe: false, repostsCount: 0 },
+            ]);
+          }}
+        />
+
+
       </div>
 
-      <ReplyList
-  postId={post.id}
-  replies={replies} 
-  onReplyAdded={(reply) => {
-    setReplies((prev) => [...prev, reply]); 
-  }}
-/>
     </div>
   );
 }

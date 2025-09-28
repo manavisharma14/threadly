@@ -56,7 +56,7 @@ export default function FollowButton({
           className={`rounded-full px-5 py-2 shadow ${
             isFollowing
               ? "bg-red-500 hover:bg-red-600 text-white"
-              : "bg-floral text-blue-900 hover:opacity-90"
+              : "bg-olive text-white hover:opacity-90"
           }`}
         >
           {isLoading ? "Loading..." : isFollowing ? "Unfollow" : "Follow"}

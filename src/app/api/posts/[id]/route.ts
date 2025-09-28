@@ -3,16 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-type Params = { params: { id: string } };
-
 // GET single post + its replies
-// GET single post + its replies// GET single post + its replies
-export async function GET(req: NextRequest, { params }: Params) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions);
 
     const post = await prisma.post.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         author: { select: { id: true, name: true, image: true, username: true } },
         _count: { select: { replies: true, likes: true } },
@@ -20,11 +20,11 @@ export async function GET(req: NextRequest, { params }: Params) {
           include: {
             author: { select: { id: true, name: true, image: true, username: true } },
             _count: { select: { likes: true } },
-            likes: { select: { userId: true } }, // ✅ needed for likedByMe
+            likes: { select: { userId: true } },
           },
           orderBy: { createdAt: "asc" },
         },
-        likes: { select: { userId: true } }, // ✅ needed for likedByMe
+        likes: { select: { userId: true } },
       },
     });
 
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       ...post,
       likesCount: post._count.likes,
       repliesCount: post._count.replies,
-      likedByMe, // ✅ send to frontend
+      likedByMe,
       replies: post.replies.map((r) => ({
         ...r,
         likesCount: r._count.likes,
@@ -56,7 +56,12 @@ export async function GET(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Failed to fetch post" }, { status: 500 });
   }
 }
-export async function POST(req: NextRequest, { params }: Params) {
+
+// POST reply
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -71,7 +76,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const reply = await prisma.post.create({
       data: {
         content,
-        parentId: params.id,
+        parentId: (await params).id,
         authorId: session.user.id,
       },
       include: { author: true },

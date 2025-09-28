@@ -1,4 +1,3 @@
-// app/profile/page.tsx
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -6,34 +5,12 @@ import ProfileClient from "./ProfileClient";
 import { TimelineItem } from "@/types/timeline";
 import { Prisma } from "@prisma/client";
 
-// Type for repost query result with optional post
-type RepostWithPost = Prisma.RepostGetPayload<{
-  include: {
-    post: {
-      include: {
-        author: true;
-        replies: {
-          select: {
-            id: true;
-            content: true;
-            createdAt: true;
-            author: true;
-          };
-        };
-        _count: { select: { likes: true; replies: true; reposts: true } };
-        likes: boolean;
-      };
-    };
-  };
-}>;
-
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return <p className="text-center mt-10">You are not logged in.</p>;
   }
 
-  // Fetch profile
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     select: {
@@ -48,7 +25,6 @@ export default async function ProfilePage() {
     },
   });
 
-  // Fetch posts
   const posts = (
     await prisma.post.findMany({
       where: { author: { email: session.user.email } },
@@ -61,13 +37,10 @@ export default async function ProfilePage() {
             email: true,
             image: true,
             username: true,
-            createdAt: true,
-            emailVerified: true,
             bio: true,
             linkedIn: true,
             website: true,
             building: true,
-            updatedAt: true,
           },
         },
         replies: {
@@ -76,6 +49,7 @@ export default async function ProfilePage() {
             id: true,
             content: true,
             createdAt: true,
+            parentId: true,
             author: {
               select: {
                 id: true,
@@ -83,14 +57,20 @@ export default async function ProfilePage() {
                 email: true,
                 image: true,
                 username: true,
-                createdAt: true,
-                emailVerified: true,
                 bio: true,
                 linkedIn: true,
                 website: true,
                 building: true,
-                updatedAt: true,
               },
+            },
+            _count: { select: { likes: true, replies: true, reposts: true } },
+            likes: {
+              where: { user: { email: session.user.email } },
+              select: { id: true },
+            },
+            reposts: {
+              where: { user: { email: session.user.email } },
+              select: { id: true },
             },
           },
         },
@@ -106,6 +86,7 @@ export default async function ProfilePage() {
       },
     })
   ).map((post) => ({
+    
     type: "post" as const,
     id: post.id,
     parentId: post.parentId ?? null,
@@ -118,8 +99,17 @@ export default async function ProfilePage() {
     likedByMe: post.likes.length > 0,
     repostedByMe: post.reposts.length > 0,
     replies: post.replies.map((r) => ({
-      ...r,
+      id: r.id,
+      content: r.content,
       createdAt: r.createdAt.toISOString(),
+      author: r.author,
+      parentId: r.parentId ?? null,
+      likesCount: r._count.likes,
+      repliesCount: r._count.replies,
+      repostsCount: r._count.reposts,
+      likedByMe: r.likes.length > 0,
+      repostedByMe: r.reposts.length > 0,
+      replies: [], // Assuming replies are not nested further
     })),
   }));
 
@@ -130,7 +120,11 @@ export default async function ProfilePage() {
       orderBy: { createdAt: "desc" },
       include: {
         post: {
-          include: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            parentId: true,
             author: {
               select: {
                 id: true,
@@ -138,13 +132,10 @@ export default async function ProfilePage() {
                 email: true,
                 image: true,
                 username: true,
-                createdAt: true,
-                emailVerified: true,
                 bio: true,
                 linkedIn: true,
                 website: true,
                 building: true,
-                updatedAt: true,
               },
             },
             replies: {
@@ -153,6 +144,7 @@ export default async function ProfilePage() {
                 id: true,
                 content: true,
                 createdAt: true,
+                parentId: true,
                 author: {
                   select: {
                     id: true,
@@ -160,19 +152,29 @@ export default async function ProfilePage() {
                     email: true,
                     image: true,
                     username: true,
-                    createdAt: true,
-                    emailVerified: true,
                     bio: true,
                     linkedIn: true,
                     website: true,
                     building: true,
-                    updatedAt: true,
                   },
+                },
+                _count: { select: { likes: true, replies: true, reposts: true } },
+                likes: {
+                  where: { user: { email: session.user.email } },
+                  select: { id: true },
+                },
+                reposts: {
+                  where: { user: { email: session.user.email } },
+                  select: { id: true },
                 },
               },
             },
             _count: { select: { likes: true, replies: true, reposts: true } },
             likes: {
+              where: { user: { email: session.user.email } },
+              select: { id: true },
+            },
+            reposts: {
               where: { user: { email: session.user.email } },
               select: { id: true },
             },
@@ -197,10 +199,19 @@ export default async function ProfilePage() {
         repliesCount: r.post!._count.replies,
         repostsCount: r.post!._count.reposts,
         likedByMe: r.post!.likes.length > 0,
-        repostedByMe: true,
+        repostedByMe: r.post!.reposts.length > 0,
         replies: r.post!.replies.map((reply) => ({
-          ...reply,
+          id: reply.id,
+          content: reply.content,
           createdAt: reply.createdAt.toISOString(),
+          author: reply.author,
+          parentId: reply.parentId ?? null,
+          likesCount: reply._count.likes,
+          repliesCount: reply._count.replies,
+          repostsCount: reply._count.reposts,
+          likedByMe: reply.likes.length > 0,
+          repostedByMe: reply.reposts.length > 0,
+          replies: [], // Assuming replies are not nested further
         })),
       },
     }));

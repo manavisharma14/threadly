@@ -14,9 +14,10 @@ export default function LikeButton({
     initialLiked?: boolean;
 }) {
   const { data: session } = useSession();
-  const [liked, setLiked] = useState<boolean>(initialLiked); // you can hydrate this from server later if needed
+  const [liked, setLiked] = useState<boolean>(initialLiked);
   const [count, setCount] = useState<number>(initialCount);
   const [error, setError] = useState<string | null>(null);
+  
 
   const handleLike = async () => {
     try {

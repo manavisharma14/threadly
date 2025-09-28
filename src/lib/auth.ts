@@ -24,6 +24,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = user.id;
         session.user.email = user.email;
+        session.user.image = user.image; // Ensure image is included
       }
       return session;
     },
