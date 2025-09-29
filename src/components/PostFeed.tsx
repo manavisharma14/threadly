@@ -100,65 +100,64 @@ function PostItem({
   const isOwnPost = !!(currentUser?.id && item.author?.id && currentUser.id === item.author.id);
 
   return (
-    <li className="border-b border-gray-700 py-4">
-      <div className="mb-4 flex justify-between items-start">
-        <Link href={`/posts/${item.id}`} className="flex-1">
-          <p className="text-gray-800">{item.content}</p>
-          <p className="text-sm text-gray-500 mt-1">
-            {new Date(item.createdAt).toLocaleString()}
-          </p>
-        </Link>
+    <li className="bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-4 shadow-sm">
+  {/* Author Row */}
+  <div className="flex justify-between items-center mb-2">
+    <Link href={`/profile/${item.author?.username}`} className="flex items-center gap-2">
+      <img
+        src={item.author?.image || "/default-avatar.png"}
+        alt={item.author?.name || "Author"}
+        className="w-8 h-8 rounded-full"
+      />
+      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        {item.author?.name || "Anonymous"}
+      </p>
+    </Link>
 
-        {item.author ? (
-          <Link
-            href={`/profile/${item.author.username}`}
-            className="flex items-center gap-2 ml-4"
-          >
-            <img
-              src={item.author.image || "/default-avatar.png"}
-              alt={item.author.name || "Author"}
-              className="w-6 h-6 rounded-full"
-            />
-            <p className="text-sm text-gray-500">{item.author.name}</p>
-          </Link>
-        ) : (
-          <p className="text-sm text-gray-300">Anonymous</p>
-        )}
-      </div>
+    <p className="text-xs text-gray-500">
+      {new Date(item.createdAt).toLocaleString()}
+    </p>
+  </div>
 
-      <div className="flex gap-5 mb-5 mt-2 justify-start">
-        <LikeButton
-          postId={item.id}
-          initialCount={item.likesCount}
-          initialLiked={item.likedByMe}
-        />
-        <ReplyButton
-          post={item}
-          count={replyCount}
-          onReplyAdded={(reply) => {
-            const newReply: Post = {
-              ...reply,
-              parentId: item.id,
-              replies: [],
-              repliesCount: 0,
-              likesCount: 0,
-              repostsCount: 0,
-              likedByMe: false,
-              repostedByMe: false,
-            };
-            setReplyCount((c) => c + 1);
-            setReplies((prev) => [...prev, newReply]);
-            onReplyAdded(reply);
-          }}
-        />
-        <RepostButton
-          postId={item.id}
-          count={item.repostsCount}
-          initiallyReposted={item.repostedByMe ?? false}
-          onRepostToggle={onRepostToggle}
-          disabled={isOwnPost}
-        />
-      </div>
-    </li>
+  {/* Post Content */}
+  <p className="text-gray-800 dark:text-gray-100 text-base leading-relaxed mb-3">
+    {item.content}
+  </p>
+
+  {/* Action Buttons */}
+  <div className="flex gap-6">
+    <LikeButton
+      postId={item.id}
+      initialCount={item.likesCount}
+      initialLiked={item.likedByMe}
+    />
+    <ReplyButton
+      post={item}
+      count={replyCount}
+      onReplyAdded={(reply) => {
+        const newReply: Post = {
+          ...reply,
+          parentId: item.id,
+          replies: [],
+          repliesCount: 0,
+          likesCount: 0,
+          repostsCount: 0,
+          likedByMe: false,
+          repostedByMe: false,
+        };
+        setReplyCount((c) => c + 1);
+        setReplies((prev) => [...prev, newReply]);
+        onReplyAdded(reply);
+      }}
+    />
+    <RepostButton
+      postId={item.id}
+      count={item.repostsCount}
+      initiallyReposted={item.repostedByMe ?? false}
+      onRepostToggle={onRepostToggle}
+      disabled={isOwnPost}
+    />
+  </div>
+</li>
   );
 }

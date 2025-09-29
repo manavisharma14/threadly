@@ -26,7 +26,7 @@ export default function HomePageClient({ initialPosts, initialUser }: HomePageCl
   };
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen">
       <ToastContainer />
 
       {/* Branding Header */}
@@ -39,42 +39,48 @@ export default function HomePageClient({ initialPosts, initialUser }: HomePageCl
         </p>
       </div>
 
-      {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-10 px-4 md:px-10">
+      {/* Main Layout Container */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 mt-10 px-4 md:px-6">
         
         {/* Left Sidebar */}
-        <div className="hidden md:block md:col-span-4">
-          {initialUser ? (
-            <div className="bg-white border border-gray-200 p-6 rounded-xl shadow space-y-4">
-              <Profile user={initialUser} />
-              <Link href="/profile">
-                <button className="w-full bg-olive text-white py-2 px-4 rounded-2xl hover:bg-olive/80 transition">
-                  View Profile
-                </button>
-              </Link>
-            </div>
-          ) : (
-            <div className="bg-white border border-gray-200 p-6 rounded-xl shadow text-center space-y-4">
-              <h2 className="text-lg font-semibold text-gray-700">Sign in to start posting!</h2>
-              <p className="text-sm text-gray-500">Join connectCircle to share updates and grow your network.</p>
-              <Link href="/signin">
-                <button className="bg-olive mt-4 text-white py-2 px-6 rounded-2xl hover:bg-olive/80 transition" onClick={() => signIn()}>
+        <div className="hidden md:block md:col-span-3">
+          <div className="bg-white border border-gray-200 p-6 rounded-xl shadow space-y-4">
+            {initialUser ? (
+              <>
+                <Profile user={initialUser} />
+                <Link href="/profile">
+                  <button className="w-full mt-4 bg-olive text-white py-2 px-4 rounded-2xl hover:bg-olive/80 transition">
+                    View Profile
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg font-semibold text-gray-700">Sign in to start posting!</h2>
+                <p className="text-sm text-gray-500">
+                  Join connectCircle to share updates and grow your network.
+                </p>
+                <button
+                  className="w-full bg-olive text-white py-2 px-4 rounded-2xl hover:bg-olive/80 transition"
+                  onClick={() => signIn()}
+                >
                   Sign In
                 </button>
-              </Link>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="md:col-span-8 space-y-6 bg-white p-6 rounded-xl shadow">
-          {initialUser && <CreatePost onPostCreated={handlePostCreated} />}
-          
-          {posts.length > 0 ? (
-            <PostFeed posts={posts} newPost={newPost} currentUser={initialUser} />
-          ) : (
-            <p className="text-center text-gray-500 mt-6">No posts available.</p>
-          )}
+        <div className="md:col-span-9">
+          <div className="bg-white border border-gray-200 p-6 rounded-xl shadow space-y-6">
+            {initialUser && <CreatePost onPostCreated={handlePostCreated} />}
+            {posts.length > 0 ? (
+              <PostFeed posts={posts} newPost={newPost} currentUser={initialUser} />
+            ) : (
+              <p className="text-center text-gray-500 mt-6">No posts available.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
