@@ -50,16 +50,16 @@ export default function FollowButton({
         }
     }
     return (
-        <Button
-          onClick={toggleFlow}
-          disabled={isLoading || targetUserId === currentUserId}
-          className={`rounded-full px-5 py-2 shadow ${
-            isFollowing
-              ? "bg-red-500 hover:bg-red-600 text-white"
-              : "bg-olive text-white hover:opacity-90"
-          }`}
-        >
-          {isLoading ? "Loading..." : isFollowing ? "Unfollow" : "Follow"}
-        </Button>
+       <Button
+  onClick={toggleFlow}
+  disabled={isLoading || targetUserId === currentUserId}
+  className={`rounded-full px-5 py-2 shadow-md transition-all duration-200 ${
+    isFollowing
+      ? "bg-[#d98b73]  text-white hover:bg-[#c9785f]"
+      : "bg-[#e6a48b] text-white hover:bg-[#d99278]"
+  } disabled:opacity-50 disabled:cursor-not-allowed`}
+>
+  {isLoading ? "Loading..." : isFollowing ? "Following" : "Follow"}
+</Button>
       )
     }

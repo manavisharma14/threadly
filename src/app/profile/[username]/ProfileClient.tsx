@@ -68,7 +68,7 @@ export default function ProfileClient({
         {/* Profile Card */}
         <div className="bg-white border border-ink/10 rounded-2xl overflow-hidden">
           {/* Banner */}
-          <div className="h-24" style={{ background: "linear-gradient(to right, #f5f0e8, #f0d5c8)" }} />
+          <div className="h-24" style={{ background: "linear-gradient(to right, #ede2d3, #e6c1b0)" }} />
 
           <div className="px-6 pb-6">
             {/* Avatar + Follow row */}
@@ -79,7 +79,7 @@ export default function ProfileClient({
                 className="w-20 h-20 rounded-full object-cover"
                 style={{ border: "3px solid #faf8f4", boxShadow: "0 0 0 2px #c4613a44" }}
               />
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 ">
                 {currentUserId && currentUserId !== user.id && (
                   <FollowButton
                     isFollowingInitial={isFollowing}

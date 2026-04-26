@@ -1,70 +1,90 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import styles from "./landing.module.css"
+import styles from "./landing.module.css";
 
 export default function LandingPage() {
   return (
     <div className={styles.root}>
-
 
       {/* HERO */}
       <section className={styles.hero}>
         <div className={styles.heroLeft}>
           <div className={styles.heroBadge}>
             <span className={styles.heroBadgeDot} />
-            Now live — join the conversation
+            Early access — be one of the first
           </div>
           <h1>Where ideas<em>find their circle.</em></h1>
           <p>ThreadO is a thoughtful space for sharing ideas, building connections, and growing your network — one thread at a time.</p>
           <div className={styles.heroActions}>
-            <button className={styles.btnPrimary} onClick={() => signIn()}>Start your thread →</button>
-            <button className={styles.btnGhost} onClick={() => signIn()}>Explore feed</button>
+            <button className={styles.btnPrimary} onClick={() => signIn()}>Get started — it&rsquo;s free →</button>
+            <button className={styles.btnGhost} onClick={() => signIn()}>Sign in</button>
           </div>
           <div className={styles.heroStats}>
-            <div><div className={styles.statNum}>14k+</div><div className={styles.statLabel}>Active members</div></div>
-            <div><div className={styles.statNum}>3.2k</div><div className={styles.statLabel}>Posts today</div></div>
-            <div><div className={styles.statNum}>98%</div><div className={styles.statLabel}>Would recommend</div></div>
+            <div>
+              <div className={styles.statNum}>Free</div>
+              <div className={styles.statLabel}>Always to join</div>
+            </div>
+            <div>
+              <div className={styles.statNum}>No ads</div>
+              <div className={styles.statLabel}>Ever. Period.</div>
+            </div>
+            <div>
+              <div className={styles.statNum}>Open</div>
+              <div className={styles.statLabel}>To everyone</div>
+            </div>
           </div>
         </div>
 
+        {/* Replace fake feed with UI preview card */}
         <div className={styles.heroVisual}>
-          <div className={styles.floatingTag}>✦ trending now</div>
-          <div className={styles.mockPost}>
+          <div className={styles.floatingTag}>✦ your space to think</div>
+
+          {/* Compose box preview */}
+          <div className={styles.mockPost} style={{ borderLeft: "3px solid #c4613a" }}>
             <div className={styles.mockUser}>
-              <div className={`${styles.avatar} ${styles.av1}`}>JK</div>
-              <div><div className={styles.mockName}>Jamie K.</div><div className={styles.mockTime}>2 min ago</div></div>
+              <div className={`${styles.avatar} ${styles.av1}`}>You</div>
+              <div>
+                <div className={styles.mockName}>Your name here</div>
+                <div className={styles.mockTime}>Share something on your mind</div>
+              </div>
             </div>
-            <div className={styles.mockText}>Just shipped my first open-source project. Months of late nights finally paid off. The community feedback has been incredible ✨</div>
+            <div className={styles.mockText} style={{ color: "#1a1a2e55", fontStyle: "italic" }}>
+              What are you thinking about today?
+            </div>
             <div className={styles.mockActions}>
-              <button className={styles.mockBtn}>♡ 48</button>
-              <button className={styles.mockBtn}>↩ Reply</button>
-              <button className={styles.mockBtn}>⌁ Share</button>
+              <button className={styles.mockBtn} style={{ background: "#1a1a2e", color: "#faf8f4" }}>
+                Post thread →
+              </button>
             </div>
           </div>
-          <div className={`${styles.mockPost} ${styles.mockPostOffset}`}>
-            <div className={styles.mockUser}>
-              <div className={`${styles.avatar} ${styles.av2}`}>SR</div>
-              <div><div className={styles.mockName}>Sofia R.</div><div className={styles.mockTime}>11 min ago</div></div>
-            </div>
-            <div className={styles.mockText}>Reminder that &ldquo;done&rdquo; is better than &ldquo;perfect.&rdquo; Ship the thing. Iterate later.</div>
-            <div className={styles.mockActions}>
-              <button className={styles.mockBtn}>♡ 112</button>
-              <button className={styles.mockBtn}>↩ Reply</button>
-              <button className={styles.mockBtn}>⌁ Share</button>
-            </div>
-          </div>
-          <div className={styles.mockPost}>
-            <div className={styles.mockUser}>
-              <div className={`${styles.avatar} ${styles.av3}`}>MP</div>
-              <div><div className={styles.mockName}>Marcus P.</div><div className={styles.mockTime}>25 min ago</div></div>
-            </div>
-            <div className={styles.mockText}>Hot take: the best communities are built around consistency, not size. Quality over quantity, always.</div>
-            <div className={styles.mockActions}>
-              <button className={styles.mockBtn}>♡ 76</button>
-              <button className={styles.mockBtn}>↩ Reply</button>
-              <button className={styles.mockBtn}>⌁ Share</button>
-            </div>
+
+          {/* Feature pills */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", padding: "0.25rem 0" }}>
+            {[
+              { icon: "◎", text: "Follow people you actually care about" },
+              { icon: "♡", text: "Like and reply to spark conversations" },
+              { icon: "⌁", text: "Repost ideas worth spreading" },
+              { icon: "◐", text: "Build your profile and grow your circle" },
+            ].map(({ icon, text }) => (
+              <div
+                key={text}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  background: "#ffffff",
+                  border: "1px solid rgba(26,26,46,0.08)",
+                  borderRadius: "12px",
+                  padding: "0.7rem 1rem",
+                  fontSize: "0.82rem",
+                  color: "#4a4a6a",
+                }}
+              >
+                <span style={{ color: "#c4613a", fontSize: "1rem" }}>{icon}</span>
+                {text}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -92,22 +112,31 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
+      {/* MANIFESTO */}
       <section className={styles.testimonials}>
-        <div className={styles.sectionLabel} style={{ marginTop: "5rem" }}>What people say</div>
-        <h2>Threads worth reading.</h2>
+        <div className={styles.sectionLabel} style={{ marginTop: "5rem" }}>Our belief</div>
+        <h2>The internet needs more signal.</h2>
         <div className={styles.testimonialsRow}>
           <div className={styles.testimonial}>
-            <div className={styles.tq}>&ldquo;ThreadO feels like the early internet again — genuine, curious people sharing things they actually care about. I&rsquo;m on it every morning.&rdquo;</div>
-            <div className={styles.ta}><div className={`${styles.avatar} ${styles.av1} ${styles.taAvatar}`}>AL</div>Anya L. &mdash; Product Designer</div>
+            <div className={styles.tq}>&ldquo;Social media should feel like a conversation at a good dinner table — thoughtful, energizing, and worth your time.&rdquo;</div>
+            <div className={styles.ta}>
+              <div className={`${styles.avatar} ${styles.av1} ${styles.taAvatar}`}>T</div>
+              The ThreadO team
+            </div>
           </div>
           <div className={`${styles.testimonial} ${styles.testimonialDark}`}>
-            <div className={styles.tq}>&ldquo;I&rsquo;ve built more meaningful connections here in two months than on other platforms in two years.&rdquo;</div>
-            <div className={`${styles.ta} ${styles.taDark}`}><div className={`${styles.taAvatar} ${styles.taAvatarDark}`}>CW</div>Chris W. &mdash; Software Engineer</div>
+            <div className={styles.tq}>&ldquo;We&rsquo;re building ThreadO because we wanted a place to share ideas without the noise. We think you deserve that too.&rdquo;</div>
+            <div className={`${styles.ta} ${styles.taDark}`}>
+              <div className={`${styles.taAvatar} ${styles.taAvatarDark}`}>T</div>
+              The ThreadO team
+            </div>
           </div>
           <div className={styles.testimonial}>
-            <div className={styles.tq}>&ldquo;The writing experience is just... lovely. Distraction-free, beautiful, and my posts actually get read by people who care.&rdquo;</div>
-            <div className={styles.ta}><div className={`${styles.avatar} ${styles.av3} ${styles.taAvatar}`}>NP</div>Nia P. &mdash; Writer</div>
+            <div className={styles.tq}>&ldquo;No ads. No algorithm pushing outrage. Just people sharing things they actually care about — and finding others who do too.&rdquo;</div>
+            <div className={styles.ta}>
+              <div className={`${styles.avatar} ${styles.av3} ${styles.taAvatar}`}>T</div>
+              The ThreadO team
+            </div>
           </div>
         </div>
       </section>
@@ -115,8 +144,10 @@ export default function LandingPage() {
       {/* CTA */}
       <section className={styles.ctaStrip}>
         <div className={styles.ctaInner}>
-          <h2>Ready to find <em>your people?</em></h2>
-          <button className={styles.btnCtaLight} onClick={() => signIn()}>Join ThreadO — it&rsquo;s free</button>
+          <h2>Be part of something <em>from day one.</em></h2>
+          <button className={styles.btnCtaLight} onClick={() => signIn()}>
+            Join ThreadO — it&rsquo;s free
+          </button>
         </div>
       </section>
 

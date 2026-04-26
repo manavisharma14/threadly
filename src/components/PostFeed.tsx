@@ -21,10 +21,15 @@ export default function PostFeed({ posts: initialPosts, newPost, currentUser }: 
   );
 
   useEffect(() => {
-    if (newPost && !newPost.parentId) {
-      setPosts((prev) => [{ type: "post" as const, ...newPost }, ...prev]);
-    }
-  }, [newPost]);
+  if (newPost && !newPost.parentId) {
+    setPosts((prev) => {
+      const exists = prev.some((p) => p.id === newPost.id);
+      if (exists) return prev;
+
+      return [{ type: "post", ...newPost }, ...prev];
+    });
+  }
+}, [newPost]);
 
   return (
     <div>

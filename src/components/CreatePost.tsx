@@ -3,7 +3,11 @@ import { useState } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 
-export default function CreatePost({ onPostCreated }: { onPostCreated?: (p: any) => void }) {
+export default function CreatePost({
+  onPostCreated,
+}: {
+  onPostCreated?: (p: any) => void;
+}) {
   const [content, setContent] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,8 +24,6 @@ export default function CreatePost({ onPostCreated }: { onPostCreated?: (p: any)
       if (res.ok) {
         const newPost = await res.json();
         setContent("");
-
-        // tell parent about the new post
         onPostCreated?.(newPost);
       } else {
         console.error("Failed to create post");
@@ -32,20 +34,24 @@ export default function CreatePost({ onPostCreated }: { onPostCreated?: (p: any)
   };
 
   return (
-    <div>
-      <div className="flex gap-2 flex-col">
+    <div className="rounded-2xl border border-[#ead7cc] bg-white/90 shadow-sm p-4">
+      <div className="flex flex-col gap-3">
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="What's on your mind today?"
-          className="w-full"
+          placeholder="What are you building today?"
+          className="min-h-[110px] resize-none border-[#e7d2c5] bg-[#fffaf7] text-[#4a3b34] placeholder:text-[#b08f7e] focus-visible:ring-[#d98b73] focus-visible:border-[#d98b73]"
         />
-        <Button
-          onClick={handleSubmit}
-          className="mt-2 bg-olive hover:bg-olive/70 text-white px-4 py-2 rounded"
-        >
-          POST!
-        </Button>
+
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSubmit}
+            disabled={!content.trim()}
+            className="rounded-full px-6 py-2 font-medium text-white shadow-md transition-all duration-200 bg-gradient-to-r from-[#e6a48b] to-[#d98b73] hover:from-[#dc957a] hover:to-[#c9785f] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Post
+          </Button>
+        </div>
       </div>
     </div>
   );
