@@ -2,12 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-smoky text-floral;
+@layer base {
+  :root {
+    --ink: #1a1a2e;
+    --terracotta: #c4613a;
+    --sand: #f5f0e8;
+    --cream: #faf8f4;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #faf8f4;
+    color: #1a1a2e;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Playfair Display', serif;
+  }
 }
 
-
-/* globals.css */
-[data-radix-dialog-content] {
-  border-radius: 1rem !important; /* same as rounded-2xl */
+@layer utilities {
+  .font-serif {
+    font-family: 'Playfair Display', serif;
+  }
 }

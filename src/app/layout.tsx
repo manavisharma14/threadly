@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${myFont.className} bg-smoky text-floral bg-gray-100 min-h-screen flex flex-col items-center`}
+        className={`${myFont.className} bg-smoky text-floral min-h-screen`}
       >
         <Providers>
         <Navbar />

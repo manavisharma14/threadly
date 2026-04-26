@@ -8,20 +8,21 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",   // ← covers src/app or src/components projects
   ],
   theme: {
-  	extend: {
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		},
-  		colors: {
-			// smoky: "#11120D",
-			smoky: "#F8F7F4",
-			olive: "#6B705C",
-			bone: "#6B705C",
-			floral: "#2D2D2D",
-  	}
-}
+  extend: {
+    colors: {
+      ink: '#1a1a2e',
+      terracotta: '#c4613a',
+      'terracotta-light': '#f0d5c8',
+      sand: '#f5f0e8',
+      'sand-dark': '#ede6d6',
+      sage: '#4a7c59',
+      cream: '#faf8f4',
+    },
+    fontFamily: {
+      serif: ['"Playfair Display"', 'Georgia', 'serif'],
+      sans: ['"DM Sans"', 'sans-serif'],
+    },
   },
+},
   plugins: [require("tailwindcss-animate")],
 };

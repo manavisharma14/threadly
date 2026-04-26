@@ -1,19 +1,30 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { AuthButtons } from "@/components/AuthButtons";
+import styles from "./Navbar.module.css";
 
 export default async function Navbar() {
   const session = await getServerSession(authOptions);
 
   return (
-    <nav className="w-full bg-olive/20 text-floral shadow-md">
-      <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-        <img src="/logo.png" alt="Logo" className="w-10 h-10" />
-        <div className="flex items-center gap-12">
-          <Link href="/" className="hover:underline">Home</Link>
-          <AuthButtons session={session} />
+    <nav className={styles.nav}>
+      {/* Left */}
+      <Link href="/" className={styles.brand}>
+        
+        <div className={styles.logo}>
+          Thread<em>O</em>
         </div>
+      </Link>
+
+      {/* Right */}
+      <div className={styles.navLinks}>
+        <Link href="/home" className={styles.link}>
+          Feed
+        </Link>
+
+        <AuthButtons session={session} />
       </div>
     </nav>
   );

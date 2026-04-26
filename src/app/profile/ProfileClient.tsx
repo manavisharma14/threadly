@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import LikeButton from "@/components/LikeButton";
 import ReplyButton from "@/components/ReplyButton";
-import { Trash2 } from "lucide-react";
+import { Trash2, Link2, Globe, Briefcase } from "lucide-react";
 import RepostButton from "@/components/RepostButton";
 import {
   Dialog,
@@ -34,6 +34,9 @@ type ProfileClientProps = {
   posts: TimelineItem[];
 };
 
+const inputClass =
+  "w-full px-4 py-2.5 rounded-xl bg-sand border border-sand-dark text-ink text-sm placeholder:text-ink/35 focus:outline-none focus:ring-2 focus:ring-terracotta/40 transition";
+
 export default function ProfileClient({ session, user, posts }: ProfileClientProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -44,28 +47,22 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
   const [linkedin, setLinkedin] = useState(user?.linkedIn ?? "");
   const [website, setWebsite] = useState(user?.website ?? "");
   const [building, setBuilding] = useState(user?.building ?? "");
-
   const [allPosts, setAllPosts] = useState<TimelineItem[]>(posts);
 
   useEffect(() => {
-    if (!user?.username) {
-      setOpen(true); // auto open modal if username missing
-    }
+    if (!user?.username) setOpen(true);
   }, [user]);
 
-  // Save profile
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { username, bio, linkedIn: linkedin, website, building };
-
     const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ username, bio, linkedIn: linkedin, website, building }),
     });
-
     if (res.ok) {
       setOpen(false);
+      setEditOpen(false);
       router.refresh();
     } else {
       const err = await res.json().catch(() => ({}));
@@ -73,10 +70,8 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
     }
   };
 
-  // Delete post
   const handleDeletePost = async (postId: string) => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
-
+    if (!confirm("Delete this post?")) return;
     const res = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
     if (res.ok) {
       setAllPosts((prev) => prev.filter((p) => p.type !== "post" || p.id !== postId));
@@ -86,314 +81,267 @@ export default function ProfileClient({ session, user, posts }: ProfileClientPro
     }
   };
 
-  // Normalize TimelineItem to Post
-  const normalizePost = (item: TimelineItem): Post => {
-    if (item.type === "post") {
-      return item; // TimelinePost extends Post, so it's compatible
-    }
-    // For TimelineRepost, extract the nested post
-    return {
-      ...item.post,
-      parentId: null, // Reposts typically don't have a parentId
-      replies: item.post.replies || [], // Ensure replies is an array
-    };
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
   };
 
+  const postCount = allPosts.filter((p) => p.type === "post" && !p.parentId).length;
+
   return (
-    <div className="mt-10 p-6 w-3/4 mx-auto space-y-8">
+    <div className="min-h-screen bg-cream">
+      {/* Username setup modal */}
       {!user?.username && (
-        <Dialog open={open} onOpenChange={() => { }}>
-          <DialogContent className="!rounded-3xl bg-white dark:bg-smoky text-floral border border-olive/30 max-w-md shadow-xl">
+        <Dialog open={open} onOpenChange={() => {}}>
+          <DialogContent className="!rounded-3xl bg-white border border-ink/10 max-w-md shadow-xl">
             <DialogHeader>
-              <DialogTitle className="text-center text-lg font-bold">
+              <DialogTitle className="text-center font-serif text-xl font-bold text-ink">
                 Pick your username
               </DialogTitle>
-              <DialogDescription className="text-center text-sm">
-                This will be your unique name across CampusCircle.
+              <DialogDescription className="text-center text-sm text-ink/50">
+                This will be your unique name on ThreadO.
               </DialogDescription>
             </DialogHeader>
-
-            <form onSubmit={handleSave} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-4 mt-2">
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
+                placeholder="@username"
                 required
-                className="w-full px-4 py-2 rounded-xl bg-gray-100 text-sm text-black focus:outline-none focus:ring-2 focus:ring-olive"
+                className={inputClass}
               />
-              <div className="flex justify-center">
-                <Button
-                  type="submit"
-                  className="bg-olive text-white px-6 py-2 rounded-full hover:bg-olive/80 transition"
-                >
-                  Save & Continue
-                </Button>
-              </div>
+              <button
+                type="submit"
+                className="w-full bg-ink text-cream py-2.5 rounded-full text-sm font-medium hover:bg-terracotta transition-colors"
+              >
+                Save & Continue
+              </button>
             </form>
           </DialogContent>
         </Dialog>
       )}
-      {/* Profile Header */}
-      <div className="flex items-center gap-6 bg-olive/20 rounded-xl shadow-md p-6">
-        <img
-          src={user?.image || ""}
-          alt="Profile"
-          className="w-32 h-32 rounded-full border-4 border-bone"
-        />
-        <div className="flex-1">
-          <h2 className="text-2xl font-bold text-floral">{user?.name}</h2>
-          <p className="text-sm text-floral/70">{user?.email}</p>
-          <div className="mt-3 space-y-1 text-sm">
-            <p className="text-floral">{username}</p>
-            <p className="text-floral">{bio || "No bio yet."}</p>
-            <p className="text-floral">LinkedIn: {linkedin || "—"}</p>
-            <p className="text-floral">Website: {website || "—"}</p>
-            <p className="text-floral">Building: {building || "—"}</p>
+
+      <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
+
+        {/* Profile Card */}
+        <div className="bg-white border border-ink/10 rounded-2xl overflow-hidden">
+          {/* Top banner */}
+          <div className="h-24 bg-gradient-to-r from-sand to-terracotta/15" />
+
+          <div className="px-6 pb-6">
+            {/* Avatar row */}
+            <div className="flex items-end justify-between -mt-10 mb-4">
+              <img
+                src={user?.image || "/default-avatar.png"}
+                alt="Profile"
+                className="w-20 h-20 rounded-full object-cover"
+                style={{ border: "3px solid #faf8f4", boxShadow: "0 0 0 2px #c4613a44" }}
+              />
+              <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogTrigger asChild>
+                  <button className="mb-1 border border-ink/20 text-ink text-sm px-4 py-1.5 rounded-full hover:border-terracotta hover:text-terracotta transition-colors">
+                    Edit Profile
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="!rounded-3xl bg-white border border-ink/10 max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="font-serif text-lg font-bold text-ink">Edit profile</DialogTitle>
+                    <DialogDescription className="text-sm text-ink/45">
+                      Update what others see on your profile.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSave} className="space-y-3 mt-2">
+                    <textarea
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="Bio"
+                      className={inputClass}
+                      rows={3}
+                    />
+                    <input type="url" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="LinkedIn URL" className={inputClass} />
+                    <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website URL" className={inputClass} />
+                    <input type="text" value={building} onChange={(e) => setBuilding(e.target.value)} placeholder="What are you building?" className={inputClass} />
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button type="button" onClick={() => setEditOpen(false)} className="text-sm text-ink/45 px-4 py-2 rounded-full hover:text-ink transition-colors">
+                        Cancel
+                      </button>
+                      <button type="submit" className="bg-ink text-cream text-sm px-5 py-2 rounded-full hover:bg-terracotta transition-colors">
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Name & meta */}
+            <h2 className="font-serif text-[1.5rem] font-bold text-ink leading-tight">{user?.name}</h2>
+            {username && <p className="text-sm text-terracotta mt-0.5">@{username}</p>}
+            <p className="text-sm text-ink/45 mt-0.5">{user?.email}</p>
+
+            {bio && <p className="text-sm text-ink/70 mt-3 leading-relaxed max-w-lg">{bio}</p>}
+
+            {/* Links */}
+            {(linkedin || website || building) && (
+              <div className="flex flex-wrap gap-4 mt-3">
+                {linkedin && (
+                  <a href={linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs text-ink/50 hover:text-terracotta transition-colors">
+                    <Link2 size={12} /> LinkedIn
+                  </a>
+                )}
+                {website && (
+                  <a href={website} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs text-ink/50 hover:text-terracotta transition-colors">
+                    <Globe size={12} /> Website
+                  </a>
+                )}
+                {building && (
+                  <span className="flex items-center gap-1.5 text-xs text-ink/50">
+                    <Briefcase size={12} /> {building}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Stats */}
+            <div className="flex gap-6 mt-5 pt-4 border-t border-ink/10">
+              {[
+                { num: postCount, label: "Posts" },
+                { num: 0, label: "Following" },
+                { num: 0, label: "Followers" },
+              ].map(({ num, label }) => (
+                <div key={label}>
+                  <div className="font-serif text-xl font-bold text-ink">{num}</div>
+                  <div className="text-[0.65rem] text-ink/40 uppercase tracking-wider mt-0.5">{label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogTrigger className="ml-auto bg-olive text-white px-4 py-2 rounded-xl hover:bg-olive/60">
-            Edit Profile
-          </DialogTrigger>
-          <DialogContent className="!rounded-3xl bg-smoky text-floral border border-olive/40">
-            <DialogHeader>
-              <DialogTitle>Edit profile</DialogTitle>
-              <DialogDescription>
-                Update what others see on your profile.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSave} className="space-y-4">
 
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Bio"
-                className="w-full px-3 py-2 rounded-xl bg-gray-100 text-black border border-gray-300  focus:outline-none focus:ring-2 focus:ring-olive"
-                rows={3}
-              />
-              <input
-                type="url"
-                value={linkedin}
-                onChange={(e) => setLinkedin(e.target.value)}
-                placeholder="LinkedIn"
-                className="w-full px-3 py-2 rounded-xl bg-gray-100 text-black border border-gray-300  focus:outline-none focus:ring-2 focus:ring-olive"
-              />
-              <input
-                type="url"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="Website"
-                className="w-full px-3 py-2 rounded-xl bg-gray-100 text-black border border-gray-300  focus:outline-none focus:ring-2 focus:ring-olive"
-              />
-              <input
-                type="text"
-                value={building}
-                onChange={(e) => setBuilding(e.target.value)}
-                placeholder="Building"
-                className="w-full px-3 py-2 rounded-xl bg-gray-100 text-black border border-gray-300  focus:outline-none focus:ring-2 focus:ring-olive"
-              />
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="bg-transparent text-gray-600 dark:text-gray-300 hover:text-olive hover:bg-olive/10 dark:hover:bg-olive/20 transition"
-                >
-                  Cancel
-                </Button>
+        {/* Posts */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-serif text-xl font-bold text-ink">Your Posts</h2>
+            <span className="text-[0.72rem] text-ink/35 uppercase tracking-widest">{postCount} threads</span>
+          </div>
 
-                <Button
-                  type="submit"
-                  className="bg-olive text-white hover:bg-olive/80 transition px-4 py-2 rounded-md"
-                >
-                  Save
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+          {allPosts.filter((p) => p.type === "post" && !p.parentId).length === 0 ? (
+            <div className="text-center py-16 bg-white border border-ink/10 rounded-2xl">
+              <p className="text-2xl mb-2">✦</p>
+              <p className="text-sm text-ink/40">No posts yet — share your first thought.</p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {allPosts
+                .filter(
+                  (item): item is TimelinePost | TimelineRepost =>
+                    (item.type === "post" && !item.parentId) || item.type === "repost"
+                )
+                .map((item) => {
+                  const isRepost = item.type === "repost";
+                  const post = isRepost ? item.post : item;
+                  const repostedAt = isRepost ? item.createdAt : null;
 
-      {/* Posts */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4 text-white">Your Posts</h2>
-        {allPosts.filter((p) => p.type === "post" && !p.parentId).length === 0 ? (
-          <p className="text-gray-400">No posts yet. Write your first post!</p>
-        ) : (
-          <ul className="space-y-4">
-            {allPosts
-              .filter(
-                (item): item is TimelinePost | TimelineRepost =>
-                  (item.type === "post" && !item.parentId) || item.type === "repost"
-              )
-              .map((item) => {
-                const isRepost = item.type === "repost";
-                const post = isRepost ? item.post : item;
-                const repostedAt = isRepost ? item.createdAt : null;
-                return (
-                  <li
-                    key={item.id}
-                    className="p-4 rounded-lg bg-smoky border-b border-olive/40"
-                  >
+                  return (
+                    <li key={item.id} className="bg-white border border-ink/10 rounded-2xl p-5">
+                      {isRepost && (
+                        <p className="text-[0.72rem] text-terracotta mb-3 italic flex items-center gap-1">
+                          ↺ You reposted · {timeAgo(repostedAt!)}
+                        </p>
+                      )}
 
-                    {isRepost && (
-                      <p className="text-xs text-olive mb-2 italic">
-                        You reposted on{" "}
-                        {new Date(repostedAt!).toLocaleString()}
-                      </p>
-                    )}
-                    {/* Header */}
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={post.author?.image || ""}
-                        alt=""
-                        className="w-8 h-8 rounded-full"
-                      />
-                      <div className="flex-1 flex justify-between items-start">
-                        <div>
-                          <span className="text-sm text-gray-500">{post.author?.name}</span>
-                          <p className="text-gray-400">{post.content}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(post.createdAt).toLocaleString()}
-                          </p>
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={post.author?.image || "/default-avatar.png"}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover"
+                            style={{ border: "2px solid #c4613a22" }}
+                          />
+                          <div>
+                            <span className="text-[0.85rem] font-medium text-ink">{post.author?.name}</span>
+                            <span className="text-[0.65rem] text-ink/35 ml-2">{timeAgo(post.createdAt)}</span>
+                          </div>
                         </div>
-                        <Button onClick={() => handleDeletePost(post.id)}>
-                          <Trash2 />
-                        </Button>
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="text-ink/25 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-50"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-5 mb-5 mt-2 justify-end">
-                      <LikeButton
+                      {/* Content */}
+                      <p className="text-[0.92rem] text-ink/80 leading-[1.7] mb-4">{post.content}</p>
+
+                      {/* Actions */}
+                      <div className="border-t border-ink/8 pt-3 flex items-center gap-5">
+                        <LikeButton postId={post.id} initialCount={post.likesCount} initialLiked={post.likedByMe} />
+                        <ReplyButton
+                          post={post}
+                          count={post.repliesCount}
+                          onReplyAdded={(reply) => {
+                            setAllPosts((prev): TimelineItem[] =>
+                              prev.map((p) => {
+                                if (p.type === "post" && p.id === post.id) {
+                                  return {
+                                    ...p,
+                                    repliesCount: p.repliesCount + 1,
+                                    replies: [...p.replies, { ...reply, author: { ...reply.author, email: reply.author.email ?? null } }],
+                                  } as TimelinePost;
+                                }
+                                if (p.type === "repost" && p.post.id === post.id) {
+                                  return {
+                                    ...p,
+                                    post: {
+                                      ...p.post,
+                                      repliesCount: p.post.repliesCount + 1,
+                                      replies: [...(p.post.replies || []), { ...reply, author: { ...reply.author, email: reply.author.email ?? null } }],
+                                    },
+                                  } as TimelineRepost;
+                                }
+                                return p;
+                              })
+                            );
+                          }}
+                        />
+                      </div>
+
+                      {/* Replies */}
+                      <ReplyList
                         postId={post.id}
-                        initialCount={post.likesCount}
-                        initialLiked={post.likedByMe}
-                      />
-                      <ReplyButton
-                        post={post}
-                        count={post.repliesCount}
-                        onReplyAdded={(reply) => {
+                        replies={post.replies || []}
+                        onReplyAdded={(reply: Post) => {
                           setAllPosts((prev): TimelineItem[] =>
                             prev.map((p) => {
                               if (p.type === "post" && p.id === post.id) {
-                                const updated: TimelinePost = {
+                                return {
                                   ...p,
                                   repliesCount: p.repliesCount + 1,
                                   replies: [
                                     ...p.replies,
-                                    {
-                                      ...reply,
-                                      author: {
-                                        ...reply.author,
-                                        email: reply.author.email ?? null,
-                                      },
-                                    },
+                                    { ...reply, parentId: post.id, replies: [], repliesCount: 0, likesCount: 0, repostsCount: 0, likedByMe: false, repostedByMe: false },
                                   ],
-                                };
-                                return updated;
-                              }
-                              if (p.type === "repost" && p.post.id === post.id) {
-                                const updated: TimelineRepost = {
-                                  ...p,
-                                  post: {
-                                    ...p.post,
-                                    repliesCount: p.post.repliesCount + 1,
-                                    replies: [
-                                      ...(p.post.replies || []),
-                                      {
-                                        ...reply,
-                                        author: {
-                                          ...reply.author,
-                                          email: reply.author.email ?? null,
-                                        },
-                                      },
-                                    ],
-                                  },
-                                };
-                                return updated;
+                                } as TimelinePost;
                               }
                               return p;
                             })
                           );
                         }}
                       />
-
-
-                      {/* <RepostButton
-  postId={post.id}
-  initiallyReposted={post.repostedByMe ?? false}
-  onRepostToggle={(newState) => {
-    setAllPosts((prev) => {
-      const alreadyExists = prev.some(
-        (p) => p.type === "repost" && p.post.id === post.id
-      );
-
-      if (newState && !alreadyExists) {
-        // ✅ Add repost to the top of the timeline
-        const newRepost: TimelineRepost = {
-          type: "repost",
-          id: `temp-${Date.now()}`, // temp id, optionally replace
-          createdAt: new Date().toISOString(),
-          count: (post.repostsCount ?? 0) + 1,
-          post: {
-            ...post,
-            repostedByMe: true,
-          },
-        };
-        return [newRepost, ...prev];
-      }
-
-      // ✅ Just update repostedByMe on matching post
-      return prev.map((p) =>
-        (p.type === "post" && p.id === post.id) ||
-        (p.type === "repost" && p.post.id === post.id)
-          ? p.type === "post"
-            ? { ...p, repostedByMe: newState }
-            : { ...p, post: { ...p.post, repostedByMe: newState } }
-          : p
-      );
-    });
-  }}
-/> */}
-                    </div>
-                    <ReplyList
-                      postId={post.id}
-                      replies={post.replies || []}
-                      onReplyAdded={(reply: Post) => {
-                        setAllPosts((prev): TimelineItem[] =>
-                          prev.map((p) => {
-                            if (p.type === "post" && p.id === post.id) {
-                              const updated: TimelinePost = {
-                                ...p,
-                                repliesCount: p.repliesCount + 1,
-                                replies: [
-                                  ...p.replies,
-                                  {
-                                    ...reply,
-                                    createdAt: reply.createdAt, // Already a string from the Post type
-                                    parentId: post.id, // Set parentId to the current post's ID
-                                    replies: [], // Initialize empty replies array (no nesting assumed)
-                                    repliesCount: 0, // New reply has no replies
-                                    likesCount: 0, // New reply has no likes
-                                    repostsCount: 0, // New reply has no reposts
-                                    likedByMe: false, // New reply not liked by current user
-                                    repostedByMe: false, // New reply not reposted by current user
-                                  },
-                                ],
-                              };
-                              return updated;
-                            }
-                            return p;
-                          })
-                        );
-                      }}
-                    />
-                  </li>
-                );
-              })}
-          </ul>
-        )}
+                    </li>
+                  );
+                })}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
