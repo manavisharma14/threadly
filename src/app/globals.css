@@ -3,20 +3,9 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --ink: #1a1a2e;
-    --terracotta: #c4613a;
-    --sand: #f5f0e8;
-    --cream: #faf8f4;
-  }
+  * { box-sizing: border-box; }
 
-  * {
-    box-sizing: border-box;
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
+  html { scroll-behavior: smooth; }
 
   body {
     background-color: #faf8f4;
@@ -24,6 +13,7 @@
     font-family: 'DM Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    margin: 0;
   }
 
   h1, h2, h3 {
@@ -31,8 +21,15 @@
   }
 }
 
-@layer utilities {
-  .font-serif {
-    font-family: 'Playfair Display', serif;
-  }
+/* Shadcn dialog override */
+[role="dialog"] {
+  background-color: #ffffff !important;
+  color: #1a1a2e !important;
+  border: 1px solid rgba(26,26,46,0.10) !important;
+  border-radius: 1.5rem !important;
+}
+
+[data-radix-dialog-overlay] {
+  background-color: rgba(26,26,46,0.4) !important;
+  backdrop-filter: blur(4px) !important;
 }

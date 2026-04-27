@@ -1,7 +1,6 @@
-// app/home/HomePageClient.tsx
-
 "use client";
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import CreatePost from "@/components/CreatePost";
 import PostFeed from "@/components/PostFeed";
@@ -28,13 +27,13 @@ export default function HomePageClient({ initialPosts, initialUser }: HomePageCl
     setPosts((prev) => [{ type: "post", ...post }, ...prev]);
   };
 
-  // Not logged in → landing page (has its OWN nav, no Navbar component)
+  // Not logged in → landing page
   if (!initialUser) return <LandingPage />;
 
-  // Logged in but no username → username setup (no nav needed)
+  // Logged in but no username → username setup
   if (!initialUser.username) return <UsernameSetup />;
 
-  // Logged in + username → feed WITH Navbar
+  // Logged in + username → feed
   return (
     <div className="min-h-screen bg-cream">
       <ToastContainer />

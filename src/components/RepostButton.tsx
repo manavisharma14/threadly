@@ -23,15 +23,12 @@ export default function RepostButton({
 
   const toggleRepost = async () => {
     if (disabled || loading) return;
-
     setLoading(true);
-    
+
     try {
       const res = await fetch(`/api/reposts/${postId}`, {
         method: reposted ? "DELETE" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
 
       const data = await res.json();
@@ -42,8 +39,7 @@ export default function RepostButton({
       } else {
         toast.error(data.error || "Failed to repost");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
@@ -51,16 +47,32 @@ export default function RepostButton({
   };
 
   return (
-    <div className="flex items-center space-x-1">
-      <button
-        className={`text-gray-500 ${disabled || loading ? "opacity-50 cursor-not-allowed" : "hover:text-blue-500"}`}
-        onClick={toggleRepost}
-        title="Repost"
-        disabled={disabled || loading}
-      >
-        <Repeat2 size={28} />
-      </button>
-      {count >= 0 && <span>{count}</span>}
-    </div>
+    <button
+      onClick={toggleRepost}
+      disabled={disabled || loading}
+      className="flex items-center gap-1.5 transition-all"
+      style={{
+        color: reposted
+          ? "#4a7c59"
+          : disabled
+          ? "rgba(26,26,46,0.2)"
+          : "rgba(26,26,46,0.4)",
+        cursor: disabled ? "not-allowed" : "pointer",
+      }}
+      onMouseOver={e => {
+        if (!disabled && !loading) e.currentTarget.style.color = "#4a7c59";
+      }}
+      onMouseOut={e => {
+        if (!disabled && !loading)
+          e.currentTarget.style.color = reposted ? "#4a7c59" : "rgba(26,26,46,0.4)";
+      }}
+      title={disabled ? "Can't repost your own post" : reposted ? "Undo repost" : "Repost"}
+    >
+      <Repeat2
+        size={16}
+        style={{ transition: "all 0.15s" }}
+      />
+      <span className="text-xs font-medium">{count > 0 ? count : ""}</span>
+    </button>
   );
 }

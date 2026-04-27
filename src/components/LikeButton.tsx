@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Heart } from "lucide-react";
@@ -11,47 +10,49 @@ export default function LikeButton({
 }: {
   postId: string;
   initialCount?: number;
-    initialLiked?: boolean;
+  initialLiked?: boolean;
 }) {
   const { data: session } = useSession();
-  const [liked, setLiked] = useState<boolean>(initialLiked);
-  const [count, setCount] = useState<number>(initialCount);
-  const [error, setError] = useState<string | null>(null);
-  
+  const [liked, setLiked] = useState(initialLiked);
+  const [count, setCount] = useState(initialCount);
 
   const handleLike = async () => {
-    try {
-      if (!session?.user?.email) {
-        setError("You must be logged in to like a post");
-        return;
-      }
+    if (!session?.user?.email) return;
 
-      const res = await fetch("/api/likes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId }),
-      });
+    const res = await fetch("/api/likes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId }),
+    });
 
-      if (!res.ok) throw new Error("Failed to update like");
-
+    if (res.ok) {
       const data = await res.json();
       setLiked(data.liked);
-      setCount(data.count); // backend returns updated count
-    } catch (err) {
-      setError((err as Error).message);
+      setCount(data.count);
     }
   };
 
   return (
     <button
       onClick={handleLike}
-      className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-500 transition"
+      className="flex items-center gap-1.5 transition-all group"
+      style={{ color: liked ? "#c4613a" : "rgba(26,26,46,0.4)" }}
+      onMouseOver={e => {
+        if (!liked) e.currentTarget.style.color = "#c4613a";
+      }}
+      onMouseOut={e => {
+        if (!liked) e.currentTarget.style.color = "rgba(26,26,46,0.4)";
+      }}
     >
       <Heart
-        size={18}
-        className={liked ? "fill-red-500 text-red-500" : "text-gray-500"}
+        size={16}
+        style={{
+          fill: liked ? "#c4613a" : "transparent",
+          color: liked ? "#c4613a" : "inherit",
+          transition: "all 0.15s",
+        }}
       />
-      {count}
+      <span className="text-xs font-medium">{count > 0 ? count : ""}</span>
     </button>
   );
 }
