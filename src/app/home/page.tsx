@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import HomePageClient from "./HomePageClient"
+import { getHomeFeed } from "@/lib/feed";
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
@@ -21,27 +22,9 @@ export default async function HomePage() {
     },
   });
 
-  const posts = await prisma.post.findMany({
-    where: { parentId: null },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          username: true,
-        },
-      },
-      _count: { select: { replies: true, likes: true } },
-      likes: {
-        where: { userId: user?.id },
-        select: { userId: true },
-      },
-    },
-  });
+
+
+  const posts = await getHomeFeed(user!.id, 50);
 
   const formattedPosts = posts.map((post) => ({
     type: "post" as const,
