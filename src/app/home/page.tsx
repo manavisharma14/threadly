@@ -22,9 +22,13 @@ export default async function HomePage() {
     },
   });
 
+   if (!user) {
 
+    return <HomePageClient initialPosts={[]} initialUser={null} />;
 
-  const posts = await getHomeFeed(user!.id, 50);
+  }
+
+  const posts = await getHomeFeed(user.id, 50);
 
   const formattedPosts = posts.map((post) => ({
     type: "post" as const,
