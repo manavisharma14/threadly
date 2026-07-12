@@ -198,3 +198,64 @@ export async function getHomeFeed(userId: string, limit = FEED_LIMIT) {
 
   return posts;
 }
+
+const MAX_CACHED_POSTS = 1_000;
+
+export async function fanOutPost({
+  postId,
+  authorId,
+  createdAt,
+}: {
+  postId: string;
+  authorId: string;
+  createdAt: Date;
+}) {
+  const followers = await prisma.follows.findMany({
+    where: {
+      followingId: authorId,
+    },
+    select: {
+      followerId: true,
+    },
+  });
+
+  const recipientIds = [
+    authorId,
+    ...followers.map((follow) => follow.followerId),
+  ];
+
+  const score = createdAt.getTime();
+  const pipeline = redis.pipeline();
+
+  for (const recipientId of recipientIds) {
+    const key = feedKey(recipientId);
+
+    // Only update feeds that have already been built.
+    const initialized = await redis.exists(`${key}:initialized`);
+
+    if (!initialized) {
+      continue;
+    }
+
+    pipeline.zadd(key, {
+      score,
+      member: postId,
+    });
+
+    // Keep only the newest 1,000 cached post IDs.
+    pipeline.zremrangebyrank(
+      key,
+      0,
+      -(MAX_CACHED_POSTS + 1)
+    );
+
+    pipeline.expire(key, FEED_TTL_SECONDS);
+
+    pipeline.expire(
+      `${key}:initialized`,
+      FEED_TTL_SECONDS
+    );
+  }
+
+  await pipeline.exec();
+}

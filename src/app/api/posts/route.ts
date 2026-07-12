@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { fanOutPost } from "@/lib/feed";
 
 // GET all top-level posts (public feed)
 export async function GET() {
@@ -38,15 +39,28 @@ export async function POST(req: NextRequest) {
     }
 
     const newPost = await prisma.post.create({
-      data: {
-        content,
-        authorId: session.user.id, // ✅ linked to logged-in user
-        parentId: null,
-      },
-      include: { author: true },
-    });
+  data: {
+    content: content.trim(),
+    authorId: session.user.id,
+    parentId: null,
+  },
+  include: {
+    author: true,
+  },
+});
 
-    return NextResponse.json(newPost, { status: 201 });
+try {
+  await fanOutPost({
+    postId: newPost.id,
+    authorId: newPost.authorId,
+    createdAt: newPost.createdAt,
+  });
+} catch (error) {
+  console.error("Redis feed fan-out failed:", error);
+}
+
+return NextResponse.json(newPost, { status: 201 });
+
   } catch (error) {
     console.error("Error creating post:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
