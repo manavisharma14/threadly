@@ -26,14 +26,23 @@ export default function Navbar() {
         <div className="w-8 h-8 rounded-full animate-pulse" style={{ background: "#f5f0e8" }} />
       ) : session ? (
         <div className="flex items-center gap-6">
-          <Link
-            href="/home"
-            className="text-sm transition-colors hover:text-terracotta"
-            style={{ color: "rgba(26,26,46,0.5)" }}
-          >
-            Feed
-          </Link>
-          <Link href="/profile" className="flex items-center gap-2 group">
+  <Link
+    href="/home"
+    className="text-sm transition-colors hover:text-terracotta"
+    style={{ color: "rgba(26,26,46,0.5)" }}
+  >
+    Feed
+  </Link>
+
+  <Link
+    href="/notifications"
+    className="text-sm transition-colors hover:text-terracotta"
+    style={{ color: "rgba(26,26,46,0.5)" }}
+  >
+    Notifications
+  </Link>
+
+  <Link href="/profile" className="flex items-center gap-2 group">
             {session.user?.image ? (
               <img
                 src={session.user.image}
