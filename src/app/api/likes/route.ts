@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+import { NotificationType } from "@prisma/client";
+import { inngest } from "@/lib/inngest";
+
 export async function GET(request: NextRequest){
     try {
         const { searchParams } = new URL(request.url);
