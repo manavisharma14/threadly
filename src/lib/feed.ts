@@ -11,7 +11,6 @@ const FEED_PAYLOAD_TTL_SECONDS = 60;
 function feedPayloadKey(userId: string) {
   return `feed:payload:${userId}`;
 }
-// comment
 
 function feedKey(userId: string) {
   return `feed:${userId}`;
@@ -33,7 +32,6 @@ async function getFollowingIds(userId: string) {
 async function getPostsFromDatabase(userId: string, limit = FEED_LIMIT) {
   const followingIds = await getFollowingIds(userId);
 
-  // Early-stage fallback: show global posts when the user follows nobody.
   if (followingIds.length === 0) {
     return prisma.post.findMany({
       where: {

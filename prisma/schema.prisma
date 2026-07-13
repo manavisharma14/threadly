@@ -8,6 +8,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum NotificationType {
+  LIKE
+  REPLY
+  FOLLOW
+  REPOST
+}
+
+enum NotificationEventStatus {
+  PENDING
+  PROCESSING
+  RETRYING
+  COMPLETED
+  DEAD_LETTER
+}
+
 model User {
   id            String    @id @default(uuid())
   name          String?
@@ -22,31 +37,37 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  posts         Post[]
-  likes         Like[]
-  reposts       Repost[]
+  accounts Account[]
+  sessions Session[]
+  posts    Post[]
+  likes    Like[]
+  reposts  Repost[]
 
-  followers     Follows[] @relation("followers")
-  following     Follows[] @relation("following")
+  followers Follows[] @relation("followers")
+  following Follows[] @relation("following")
+
+  notificationEventsCreated  NotificationEvent[] @relation("NotificationEventActor")
+  notificationEventsReceived NotificationEvent[] @relation("NotificationEventRecipient")
+
+  notificationsCreated  Notification[] @relation("NotificationActor")
+  notificationsReceived Notification[] @relation("NotificationRecipient")
 }
 
 model Account {
-  id                String  @id @default(uuid())
-  userId            String
+  id     String @id @default(uuid())
+  userId String
 
   type              String
   provider          String
   providerAccountId String
 
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
+  refresh_token String?
+  access_token  String?
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+  id_token      String?
+  session_state String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -59,14 +80,16 @@ model Post {
   content   String
   createdAt DateTime @default(now())
 
-  parentId  String?
+  parentId String?
 
-  author    User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent    Post?  @relation("PostReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   Post[] @relation("PostReplies")
+  author  User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent  Post?  @relation("PostReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Post[] @relation("PostReplies")
 
-  likes     Like[]
-  reposts   Repost[]
+  likes              Like[]
+  reposts            Repost[]
+  notificationEvents NotificationEvent[]
+  notifications      Notification[]
 
   @@index([authorId])
   @@index([parentId])
@@ -129,4 +152,64 @@ model Follows {
   @@unique([followerId, followingId])
   @@index([followerId])
   @@index([followingId])
+}
+
+model NotificationEvent {
+  id               String @id @default(uuid())
+  idempotencyKey   String @unique
+  deduplicationKey String @unique
+
+  type   NotificationType
+  status NotificationEventStatus @default(PENDING)
+
+  actorId     String
+  recipientId String
+  postId      String?
+
+  attemptCount Int @default(0)
+  maxAttempts  Int @default(5)
+
+  nextAttemptAt DateTime @default(now())
+  lastError     String?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  processedAt    DateTime?
+  deadLetteredAt DateTime?
+
+  lockedAt DateTime?
+  lockedBy String?
+
+  actor        User          @relation("NotificationEventActor", fields: [actorId], references: [id], onDelete: Cascade)
+  recipient    User          @relation("NotificationEventRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  post         Post?         @relation(fields: [postId], references: [id], onDelete: SetNull)
+  notification Notification?
+
+  @@index([status, nextAttemptAt])
+  @@index([recipientId, createdAt])
+  @@index([actorId])
+  @@index([postId])
+}
+
+model Notification {
+  id      String           @id @default(uuid())
+  eventId String           @unique
+  type    NotificationType
+
+  actorId     String
+  recipientId String
+  postId      String?
+
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  event     NotificationEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  actor     User              @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  recipient User              @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  post      Post?             @relation(fields: [postId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId, isRead, createdAt])
+  @@index([actorId])
+  @@index([postId])
 }
