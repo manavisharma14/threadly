@@ -6,6 +6,12 @@ import { redis } from "@/lib/redis";
 const FEED_LIMIT = 50;
 const FEED_TTL_SECONDS = 60 * 60 * 24;
 
+const FEED_PAYLOAD_TTL_SECONDS = 60;
+
+function feedPayloadKey(userId: string) {
+  return `feed:payload:${userId}`;
+}
+
 function feedKey(userId: string) {
   return `feed:${userId}`;
 }
@@ -144,8 +150,43 @@ async function getFeedPostIds(userId: string, limit = FEED_LIMIT) {
     return posts.map((post) => post.id);
   }
 }
-
 export async function getHomeFeed(userId: string, limit = FEED_LIMIT) {
+  const payloadKey = feedPayloadKey(userId);
+
+  try {
+    const cachedFeed = await redis.get<
+  Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    parentId: string | null;
+    author: {
+      id: string;
+      name: string | null;
+      email: string | null;
+      image: string | null;
+      username: string | null;
+    };
+    _count: {
+      replies: number;
+      likes: number;
+    };
+    likes: Array<{
+      userId: string;
+    }>;
+  }>
+>(payloadKey);
+
+if (cachedFeed) {
+  return cachedFeed.map((post) => ({
+    ...post,
+    createdAt: new Date(post.createdAt),
+  }));
+}
+  } catch (error) {
+    console.error("Feed payload cache read failed:", error);
+  }
+
   const postIds = await getFeedPostIds(userId, limit);
 
   if (postIds.length === 0) {
@@ -196,9 +237,16 @@ export async function getHomeFeed(userId: string, limit = FEED_LIMIT) {
       (order.get(b.id) ?? Number.MAX_SAFE_INTEGER)
   );
 
+  try {
+    await redis.set(payloadKey, posts, {
+      ex: FEED_PAYLOAD_TTL_SECONDS,
+    });
+  } catch (error) {
+    console.error("Feed payload cache write failed:", error);
+  }
+
   return posts;
 }
-
 const MAX_CACHED_POSTS = 1_000;
 
 export async function fanOutPost({
@@ -230,7 +278,9 @@ export async function fanOutPost({
   for (const recipientId of recipientIds) {
     const key = feedKey(recipientId);
 
-    // Only update feeds that have already been built.
+    // Always invalidate the hydrated payload cache.
+    pipeline.del(feedPayloadKey(recipientId));
+
     const initialized = await redis.exists(`${key}:initialized`);
 
     if (!initialized) {
@@ -242,7 +292,6 @@ export async function fanOutPost({
       member: postId,
     });
 
-    // Keep only the newest 1,000 cached post IDs.
     pipeline.zremrangebyrank(
       key,
       0,
@@ -259,3 +308,4 @@ export async function fanOutPost({
 
   await pipeline.exec();
 }
+

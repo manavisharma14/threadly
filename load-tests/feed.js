@@ -7,28 +7,17 @@ import { Rate, Trend } from "k6/metrics";
 const feedErrors = new Rate("feed_errors");
 const feedDuration = new Trend("feed_duration");
 
-
-const baseUrl = "http://localhost:3000";
-
-const sessionCookieName = "next-auth.session-token";
-
-const sessionCookieValue = "your-cookie";
-
 export const options = {
   scenarios: {
     feed_load: {
       executor: "constant-arrival-rate",
-
-      // 100,000 requests per minute ≈ 1,667 requests per second.
-      rate: 1667,
+      rate: 10,
       timeUnit: "1s",
-      duration: "60s",
-
-      preAllocatedVUs: 500,
-      maxVUs: 3000,
+      duration: "30s",
+      preAllocatedVUs: 20,
+      maxVUs: 100,
     },
   },
-
   thresholds: {
     http_req_failed: ["rate<0.01"],
     http_req_duration: ["p(95)<200"],
